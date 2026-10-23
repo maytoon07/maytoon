@@ -718,7 +718,7 @@ async function loadShared(){
     });
     S.posts=posts.map(p=>({id:p.id,authorId:p.author_id,title:p.title,desc:p.description||"",access:p.access,
       planLevel:p.plan_level,hearts:p.hearts,memFree:p.mem_free_level,likes:p.likes,
-      at:new Date(p.created_at).getTime(),cuts:p.cuts||[],imgs:p.imgs||[],
+      at:new Date(p.created_at).getTime(),coverE:p.cover_e,coverImg:p.cover_img,cutCount:p.cut_count||1,
       comments:new Array(countMap[p.id]||0).fill(null)}));
     save();
     const pg=[...document.querySelectorAll(".page")].find(x=>!x.hidden)?.id;
@@ -732,14 +732,18 @@ async function loadShared(){
 async function loadMyInteractions(){
   if(!S.user)return;
   try{
-    const[{data:fo},{data:lk},{data:bm}]=await Promise.all([
+    const[{data:fo},{data:lk},{data:bm},{data:mm},{data:bt}]=await Promise.all([
       sb.from("follows").select("author_id").eq("reader_id",S.user.id),
       sb.from("liked").select("post_id").eq("reader_id",S.user.id),
-      sb.from("bookmarks").select("post_id").eq("reader_id",S.user.id)
+      sb.from("bookmarks").select("post_id").eq("reader_id",S.user.id),
+      sb.from("memberships").select("author_id,level").eq("reader_id",S.user.id),
+      sb.from("bought").select("post_id").eq("reader_id",S.user.id)
     ]);
     if(fo)S.follows=fo.map(r=>r.author_id);
     if(lk)S.liked=lk.map(r=>r.post_id);
     if(bm)S.bookmarks=bm.map(r=>r.post_id);
+    if(mm){S.memberships={};mm.forEach(r=>S.memberships[r.author_id]=r.level)}
+    if(bt)S.bought=bt.map(r=>r.post_id);
     save();refresh();
   }catch(e){console.error(e)}
 }
@@ -756,8 +760,9 @@ function card(a){
   </button>`;
 }
 function toonCard(p,showAuthor=true){
-  const a=author(p.authorId),ok=canSee(p),n=(p.imgs?.length||p.cuts?.length||1);
-  const face=p.imgs?.length?`<img src="${p.imgs[0]}" alt="">`:`<span>${esc(p.cuts?.[0]?.e||a.emoji)}</span>`;
+  const a=author(p.authorId),ok=canSee(p),n=(p.imgs?.length||p.cuts?.length||p.cutCount||1);
+  const firstImg=p.imgs?.[0]||p.coverImg,firstE=p.cuts?.[0]?.e||p.coverE||a.emoji;
+  const face=firstImg?`<img src="${firstImg}" alt="">`:`<span>${esc(firstE)}</span>`;
   const bm=S.bookmarks.includes(p.id);
   return `<div class="toon" data-view="${p.id}" role="button" tabindex="0">
     <div class="cover ${ok?"":"lock"}" style="background:${a.color}">${face}<span class="cuts">${n}컷</span>${ok?"":`<span class="lk">${lockLabel(p)}</span>`}
@@ -836,7 +841,9 @@ $("memPick").addEventListener("click",e=>{const b=e.target.closest("[data-pick]"
 $("memPay").onclick=()=>{const a=current,old=memLevel(a.id);
   if(old>=0)a.memberCounts[old]--;
   S.memberships[a.id]=pickLevel;a.memberCounts[pickLevel]=(a.memberCounts[pickLevel]||0)+1;
-  if(!S.follows.includes(a.id)){S.follows.push(a.id);a.followers++}
+  if(!S.follows.includes(a.id)){S.follows.push(a.id);a.followers++;
+    sb.from("follows").insert({reader_id:S.user.id,author_id:a.id}).then(r=>r.error&&console.error(r.error));}
+  sb.from("memberships").upsert({reader_id:S.user.id,author_id:a.id,level:pickLevel}).then(r=>r.error&&console.error(r.error));
   save();closeAll();toast(`${a.plans[pickLevel].name} 멤버십에 가입했어요 (데모)`);refresh()};
 
 /* ===== 하트 ===== */
@@ -851,15 +858,20 @@ function openCharge(need,next){
 }
 $("heartPick").addEventListener("click",e=>{const b=e.target.closest("[data-pack]");if(!b)return;pickPack=+b.dataset.pack;
   $("heartPick").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("heartPay").textContent=`${won(pickPack*HEART_WON)} 충전하기`});
-$("heartPay").onclick=()=>{S.user.hearts+=pickPack;S.heartLog.push({t:"하트 충전",n:pickPack,at:Date.now()});save();closeAll();renderWho();toast(`하트 ${pickPack}개를 충전했어요 (데모)`);
+function syncHearts(){
+  sb.from("profiles").update({hearts:S.user.hearts}).eq("id",S.user.id).then(r=>r.error&&console.error(r.error));
+}
+$("heartPay").onclick=()=>{S.user.hearts+=pickPack;S.heartLog.push({t:"하트 충전",n:pickPack,at:Date.now()});syncHearts();save();closeAll();renderWho();toast(`하트 ${pickPack}개를 충전했어요 (데모)`);
   const n=afterCharge;afterCharge=null;if(n)n()};
-function spend(n,authorId,what){S.user.hearts-=n;S.heartsIn[authorId]=(S.heartsIn[authorId]||0)+n;S.heartLog.push({t:what,n:-n,at:Date.now()})}
+function spend(n,authorId,what){S.user.hearts-=n;S.heartsIn[authorId]=(S.heartsIn[authorId]||0)+n;S.heartLog.push({t:what,n:-n,at:Date.now()});syncHearts()}
 
 function buy(id){
   const p=post(id);
   if(needLogin(()=>buy(id)))return;
   if(S.user.hearts<p.hearts){openCharge(p.hearts,()=>buy(id));return}
-  spend(p.hearts,p.authorId,"만화 구매: "+p.title);S.bought.push(p.id);save();renderWho();toast(`하트 ${p.hearts}개로 열었어요`);view(id);refresh(true);
+  spend(p.hearts,p.authorId,"만화 구매: "+p.title);S.bought.push(p.id);
+  sb.from("bought").insert({reader_id:S.user.id,post_id:p.id}).then(r=>r.error&&console.error(r.error));
+  save();renderWho();toast(`하트 ${p.hearts}개로 열었어요`);view(id);refresh(true);
 }
 
 /* ===== 후원 ===== */
@@ -895,6 +907,11 @@ async function view(id){
           <button class="btn gold" type="button" data-buy="${p.id}">♥ ${p.hearts} 사용해서 보기</button>`}
       </div>`;
     show("viewModal");return;
+  }
+  if(p.cuts===undefined){ // Supabase에서 불러온 만화는 "볼 수 있을 때만" 실제 컷을 가져옴 (서버에서 막혀있음)
+    const{data:pc,error:pcErr}=await sb.from("post_content").select("cuts,imgs").eq("post_id",id).maybeSingle();
+    if(pcErr||!pc){toast("내용을 불러오지 못했어요: "+(pcErr?.message||"권한 없음"));p.cuts=[];p.imgs=[];}
+    else{p.cuts=pc.cuts||[];p.imgs=pc.imgs||[]}
   }
   const{data:cm}=await sb.from("comments").select("*").eq("post_id",id).order("created_at",{ascending:true});
   p.comments=(cm||[]).map(c=>({nick:c.nick,t:c.body}));
@@ -1071,12 +1088,15 @@ $("postForm").addEventListener("submit",async e=>{e.preventDefault();
   const files=[...$("pImgs").files].slice(0,10);let imgs=[];
   try{imgs=await Promise.all(files.map(shrink))}catch(err){toast("이미지를 읽지 못했어요. 다른 파일로 해주세요");return}
   const access=$("pAccess").value,title=$("pTitle").value.trim();
+  const cuts=imgs.length?[]:[{e:m.emoji,t:title}];
   const row={author_id:m.id,title,description:$("pDesc").value.trim()||"새 만화",access,
-    imgs,cuts:imgs.length?[]:[{e:m.emoji,t:title}]};
+    cover_img:imgs[0]||null,cover_e:imgs.length?null:m.emoji,cut_count:imgs.length||1};
   if(access==="plan")row.plan_level=+$("pPlan").value;
   if(access==="paid"){row.hearts=Math.max(1,+$("pHearts").value||1);if($("pMemFree").checked&&m.plans.length)row.mem_free_level=1}
-  const{error}=await sb.from("posts").insert(row);
+  const{data:newPost,error}=await sb.from("posts").insert(row).select().single();
   if(error){toast("업로드 실패: "+error.message);return}
+  const{error:cErr}=await sb.from("post_content").insert({post_id:newPost.id,cuts,imgs});
+  if(cErr){toast("컷 저장 실패: "+cErr.message);return}
   e.target.reset();syncAccess();
   await loadShared();renderStudio();
   toast(`${m.name} 페이지에 올렸어요${imgs.length?` (${imgs.length}컷)`:""}`)});
@@ -1135,7 +1155,9 @@ $("leaveYes").onclick=()=>{
   Object.assign(S,{user:null,authedUid:null,meAuthorId:null,follows:[],memberships:{},bought:[],liked:[],bookmarks:[],tips:S.tips.filter(t=>author(t.authorId)),heartLog:[]});
   save();renderWho();go("home");toast("탈퇴했어요. 그동안 고마웠어요")};
 function cancelMem(id){const a=author(id),lv=memLevel(id);if(lv<0)return;
-  if(a.memberCounts[lv])a.memberCounts[lv]--;delete S.memberships[id];save();renderSettings();toast(a.name+" 멤버십을 해지했어요 (데모)")}
+  if(a.memberCounts[lv])a.memberCounts[lv]--;delete S.memberships[id];
+  sb.from("memberships").delete().eq("reader_id",S.user.id).eq("author_id",id).then(r=>r.error&&console.error(r.error));
+  save();renderSettings();toast(a.name+" 멤버십을 해지했어요 (데모)")}
 
 /* ===== 현재 화면 다시 그리기 ===== */
 function refresh(keepModal){
