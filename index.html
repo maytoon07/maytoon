@@ -911,7 +911,16 @@ async function view(id){
   if(p.cuts===undefined){ // Supabase에서 불러온 만화는 "볼 수 있을 때만" 실제 컷을 가져옴 (서버에서 막혀있음)
     const{data:pc,error:pcErr}=await sb.from("post_content").select("cuts,imgs").eq("post_id",id).maybeSingle();
     if(pcErr||!pc){toast("내용을 불러오지 못했어요: "+(pcErr?.message||"권한 없음"));p.cuts=[];p.imgs=[];}
-    else{p.cuts=pc.cuts||[];p.imgs=pc.imgs||[]}
+    else{
+      p.cuts=pc.cuts||[];
+      const raw=pc.imgs||[];
+      if(!raw.length)p.imgs=[];
+      else if(raw[0].startsWith("data:"))p.imgs=raw; // 예전 방식(base64)으로 올라간 만화는 그대로 보여줌
+      else{ // Storage에 올라간 이미지는 "볼 수 있는 사람만" 임시 열람 주소(signed URL)를 받아옴
+        const signed=await Promise.all(raw.map(path=>sb.storage.from("post-images").createSignedUrl(path,3600)));
+        p.imgs=signed.map(s=>s.data?.signedUrl).filter(Boolean);
+      }
+    }
   }
   const{data:cm}=await sb.from("comments").select("*").eq("post_id",id).order("created_at",{ascending:true});
   p.comments=(cm||[]).map(c=>({nick:c.nick,t:c.body}));
@@ -1079,27 +1088,36 @@ $("planForm").addEventListener("submit",e=>{e.preventDefault();const m=author(S.
   save();renderStudio();toast(plans.length?`멤버십 ${plans.length}단계를 저장했어요`:"멤버십을 껐어요")});
 
 // 이미지를 가로 900px로 줄여서 저장 (브라우저 저장 공간 한계 때문)
+// 이미지를 가로 900px로 줄이고, 썸네일용 base64(dataUrl)와 Storage 업로드용 blob을 함께 만듦
 function shrink(file){return new Promise((res,rej)=>{const r=new FileReader();
   r.onload=()=>{const img=new Image();img.onload=()=>{const s=Math.min(1,900/img.width),c=document.createElement("canvas");
-    c.width=img.width*s;c.height=img.height*s;c.getContext("2d").drawImage(img,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.72))};
+    c.width=img.width*s;c.height=img.height*s;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    c.toBlob(blob=>res({dataUrl:c.toDataURL("image/jpeg",.72),blob}),"image/jpeg",.72)};
     img.onerror=rej;img.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
 $("postForm").addEventListener("submit",async e=>{e.preventDefault();
   const m=author(S.meAuthorId);if(!m)return;
-  const files=[...$("pImgs").files].slice(0,10);let imgs=[];
-  try{imgs=await Promise.all(files.map(shrink))}catch(err){toast("이미지를 읽지 못했어요. 다른 파일로 해주세요");return}
+  const files=[...$("pImgs").files].slice(0,10);let shrunk=[];
+  try{shrunk=await Promise.all(files.map(shrink))}catch(err){toast("이미지를 읽지 못했어요. 다른 파일로 해주세요");return}
   const access=$("pAccess").value,title=$("pTitle").value.trim();
-  const cuts=imgs.length?[]:[{e:m.emoji,t:title}];
   const row={author_id:m.id,title,description:$("pDesc").value.trim()||"새 만화",access,
-    cover_img:imgs[0]||null,cover_e:imgs.length?null:m.emoji,cut_count:imgs.length||1};
+    cover_img:shrunk[0]?.dataUrl||null,cover_e:shrunk.length?null:m.emoji,cut_count:shrunk.length||1};
   if(access==="plan")row.plan_level=+$("pPlan").value;
   if(access==="paid"){row.hearts=Math.max(1,+$("pHearts").value||1);if($("pMemFree").checked&&m.plans.length)row.mem_free_level=1}
   const{data:newPost,error}=await sb.from("posts").insert(row).select().single();
   if(error){toast("업로드 실패: "+error.message);return}
-  const{error:cErr}=await sb.from("post_content").insert({post_id:newPost.id,cuts,imgs});
+  // 실제 컷 이미지는 base64로 DB에 안 넣고, Supabase Storage에 파일로 올림 (볼 수 있는 사람만 꺼내볼 수 있게 RLS로 막혀있음)
+  let imgPaths=[];
+  if(shrunk.length){
+    const ups=await Promise.all(shrunk.map((s,i)=>sb.storage.from("post-images").upload(`${newPost.id}/${i}.jpg`,s.blob,{contentType:"image/jpeg",upsert:true})));
+    imgPaths=ups.map((u,i)=>u.error?null:`${newPost.id}/${i}.jpg`).filter(Boolean);
+    if(imgPaths.length<shrunk.length)toast("일부 이미지 업로드에 실패했어요");
+  }
+  const cuts=imgPaths.length?[]:[{e:m.emoji,t:title}];
+  const{error:cErr}=await sb.from("post_content").insert({post_id:newPost.id,cuts,imgs:imgPaths});
   if(cErr){toast("컷 저장 실패: "+cErr.message);return}
   e.target.reset();syncAccess();
   await loadShared();renderStudio();
-  toast(`${m.name} 페이지에 올렸어요${imgs.length?` (${imgs.length}컷)`:""}`)});
+  toast(`${m.name} 페이지에 올렸어요${imgPaths.length?` (${imgPaths.length}컷)`:""}`)});
 
 /* ===== 내 정보 ===== */
 const fmtDate=t=>{const d=new Date(t);return `${d.getMonth()+1}.${d.getDate()}`};
