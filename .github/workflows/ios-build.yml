@@ -19,7 +19,9 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    # macos-latest(arm64)는 요즘 용량 부족으로 큐가 오래 걸려서,
+    # 용량이 넉넉한 Intel 러너(macos-13)를 대신 사용함.
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v4
 
