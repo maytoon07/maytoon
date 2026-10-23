@@ -35,7 +35,14 @@ jobs:
         run: cp index.html www/index.html
 
       - name: Capacitor 동기화
-        run: npx cap sync ios
+        run: |
+          npx cap sync ios 2>&1 | tee /tmp/cap-sync.log
+          code=${PIPESTATUS[0]}
+          if [ "$code" != "0" ]; then
+            echo "::error::Capacitor sync failed (exit $code):%0A$(sed 's/$/%0A/' /tmp/cap-sync.log | tr -d '\n')"
+            exit $code
+          fi
+        shell: bash
 
       - name: CocoaPods 설치
         working-directory: ios/App
