@@ -9,7 +9,7 @@
 /* =========================================================
    MAYTOON 데모 — 만화 크리에이터와 팬의 짝꿍 플랫폼
    구조: 무료 팔로우 + 무료 만화 기본
-         + 크리에이터별 멤버십 플랜(단계) + 하트로 사는 단건 유료 만화 + 하트 후원
+         + 크리에이터별 멤버십 플랜(단계) + 잉크로 사는 단건 유료 만화 + 잉크 후원
    화면: 홈(추천/팔로잉) / 크리에이터 / 크리에이터 페이지 / 만화 뷰어 / 크리에이터센터
    ========================================================= */
 :root{
@@ -37,7 +37,7 @@ nav{display:flex;gap:6px;margin-left:auto}
 nav button{border:0;background:none;color:var(--muted);font-weight:600;padding:8px 12px;border-radius:999px}
 nav button[aria-current="page"]{background:var(--pink-soft);color:var(--pink)}
 .who{display:flex;gap:8px;align-items:center}
-.heart{font-weight:800;color:var(--pink)}
+.heart{font-weight:800;color:var(--gold)}
 @media(max-width:620px){nav{order:3;width:100%;margin-left:0}nav button{flex:1}.who{margin-left:auto}}
 
 /* 공통 */
@@ -308,7 +308,7 @@ footer{flex-direction:column;align-items:flex-start}
           <div class="stats4" style="margin-top:14px">
             <div><b id="sFollow">0</b><span>팔로워</span></div>
             <div><b id="sMembers">0</b><span>멤버십 회원</span></div>
-            <div><b id="sHearts">0</b><span>받은 하트 (단건+후원)</span></div>
+            <div><b id="sHearts">0</b><span>받은 잉크 (단건+후원)</span></div>
             <div><b id="sIncome">0원</b><span>이번 달 예상 수익</span></div>
           </div>
           <p class="note" style="margin:10px 0 0" id="sCalc"></p>
@@ -325,12 +325,12 @@ footer{flex-direction:column;align-items:flex-start}
                 <select id="pAccess">
                   <option value="free">누구나 무료</option>
                   <option value="plan">멤버십 전용</option>
-                  <option value="paid">하트로 구매 (단건)</option>
+                  <option value="paid">잉크로 구매 (단건)</option>
                 </select>
               </label>
               <label id="pPlanWrap" hidden>볼 수 있는 멤버십 (선택한 단계 이상)<select id="pPlan"></select></label>
               <div id="pPaidWrap" hidden style="display:grid;gap:10px">
-                <label>가격 (하트)<input id="pHearts" type="number" min="1" max="100" value="5"></label>
+                <label>가격 (잉크)<input id="pHearts" type="number" min="1" max="100" value="5"></label>
                 <label class="check"><input type="checkbox" id="pMemFree"> 멤버십 회원은 무료로 보기</label>
               </div>
               <button class="btn" type="submit">내 페이지에 올리기</button>
@@ -381,7 +381,7 @@ footer{flex-direction:column;align-items:flex-start}
     <section>
       <h2>내 정보</h2>
       <div class="card" id="setGate">
-        <p style="margin-top:0">로그인하면 내 정보와 팔로우, 멤버십, 하트 내역을 관리할 수 있어요.</p>
+        <p style="margin-top:0">로그인하면 내 정보와 팔로우, 멤버십, 잉크 내역을 관리할 수 있어요.</p>
         <button class="btn" type="button" id="login2">로그인</button>
       </div>
 
@@ -390,7 +390,7 @@ footer{flex-direction:column;align-items:flex-start}
         <div id="myMenu">
           <div class="card" style="padding:0">
             <ul class="menu">
-              <li><button type="button" data-mysec="hearts"><span>하트</span><span class="menu-r"><span class="heart" id="myHeartVal"></span> ›</span></button></li>
+              <li><button type="button" data-mysec="hearts"><span>잉크</span><span class="menu-r"><span class="heart" id="myHeartVal"></span> ›</span></button></li>
               <li><button type="button" data-mysec="mems"><span>멤버십</span><span class="menu-r" id="myMemVal">›</span></button></li>
               <li><button type="button" data-mysec="bought"><span>구매 항목</span><span class="menu-r">›</span></button></li>
               <li><button type="button" data-mysec="bookmarks"><span>북마크</span><span class="menu-r" id="myBmVal">›</span></button></li>
@@ -413,7 +413,7 @@ footer{flex-direction:column;align-items:flex-start}
 
           <div class="card" id="sec-hearts">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
-              <h3 style="margin:0">하트 <span class="heart" id="setHearts"></span></h3>
+              <h3 style="margin:0">잉크 <span class="heart" id="setHearts"></span></h3>
               <button class="btn sm" type="button" id="setCharge">충전</button>
             </div>
             <ul class="list" id="setHeartLog"></ul>
@@ -479,7 +479,7 @@ footer{flex-direction:column;align-items:flex-start}
             </div>
             <div class="gate" id="leaveBox" hidden style="margin-top:12px;text-align:left">
               <b>정말 탈퇴할까요?</b>
-              <span class="note">팔로우, 멤버십, 남은 하트, 구매한 만화가 모두 사라져요. 크리에이터로 등록했다면 올린 만화도 함께 삭제돼요.</span>
+              <span class="note">팔로우, 멤버십, 남은 잉크, 구매한 만화가 모두 사라져요. 크리에이터로 등록했다면 올린 만화도 함께 삭제돼요.</span>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button class="btn" type="button" id="leaveYes">탈퇴하기</button>
                 <button class="btn ghost" type="button" id="leaveNo">취소</button>
@@ -524,10 +524,10 @@ footer{flex-direction:column;align-items:flex-start}
   <div class="demo">데모라서 실제 결제는 되지 않아요. 실서비스에서는 정기결제 창이 열려요.</div>
 </div></div>
 
-<!-- 하트 충전 -->
+<!-- 잉크 충전 -->
 <div class="modal" id="heartModal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hT">
   <button class="x" type="button" data-close aria-label="닫기">×</button>
-  <h2 id="hT" style="margin:0">하트 충전</h2>
+  <h2 id="hT" style="margin:0">잉크 충전</h2>
   <p class="note" style="margin:0" id="hNeed"></p>
   <div class="pick" id="heartPick"></div>
   <button class="btn" type="button" id="heartPay"></button>
@@ -556,8 +556,8 @@ footer{flex-direction:column;align-items:flex-start}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 /* ===== 설정값: 정해지면 여기만 바꾸면 돼요 ===== */
-const AUTHOR_SHARE = 0.7;      // 멤버십·하트 수익 중 크리에이터 몫 (임시값)
-const HEART_WON = 100;         // 하트 1개 = 100원 (임시값)
+const AUTHOR_SHARE = 0.7;      // 멤버십·잉크 수익 중 크리에이터 몫 (임시값)
+const HEART_WON = 100;         // 잉크 1개 = 100원 (임시값) — 변수명은 내부적으로 heart를 그대로 씀
 const HEART_PACKS = [10,30,50,100];
 const TIP_PACKS = [5,10,30,50];
 
@@ -568,7 +568,7 @@ const SUPABASE_KEY = "sb_publishable_UG2duYkbtIOP8wI3_eWcSA_KJMY28Ld";
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 /* ===== 처음 상태 (예시 데이터 없음) =====
-   post.access: "free" 누구나 / "plan" 멤버십 전용(planLevel 이상) / "paid" 하트 구매(memFree면 해당 멤버십은 무료)
+   post.access: "free" 누구나 / "plan" 멤버십 전용(planLevel 이상) / "paid" 잉크 구매(memFree면 해당 멤버십은 무료)
    post.cuts: 이미지 없는 예시 컷 [{e:이모지, t:대사}] / post.imgs: 실제 업로드한 컷 이미지들 */
 const SEED = {
   user: null,                 // {id, email, nick, hearts}
@@ -576,10 +576,10 @@ const SEED = {
   meAuthorId: null,
   follows: [],                // 팔로우한 크리에이터 id
   memberships: {},            // {크리에이터id: 가입한 플랜 단계(0부터)}
-  bought: [],                 // 하트로 산 만화 id
+  bought: [],                 // 잉크로 산 만화 id
   liked: [],
   bookmarks: [],               // 나중에 보려고 담아둔 만화 id
-  heartsIn: {},               // {크리에이터id: 받은 하트 합계}
+  heartsIn: {},               // {크리에이터id: 받은 잉크 합계}
   tips: [],                   // {authorId, hearts, msg, nick, at}
   authors: [],
   posts: [],
@@ -616,7 +616,7 @@ function canSee(p){
 function lockLabel(p){
   const a=author(p.authorId);
   if(p.access==="plan")return `<span class="tag mem">🔒 ${esc(a.plans[p.planLevel]?.name||"멤버십")} 이상</span>`;
-  if(p.access==="paid")return `<span class="tag paid">♥ ${p.hearts}</span>`;
+  if(p.access==="paid")return `<span class="tag paid">🖋️ ${p.hearts}</span>`;
   return "";
 }
 function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2200)}
@@ -640,7 +640,7 @@ function go(page,keepSec){
 /* ===== 로그인 ===== */
 function renderWho(){
   $("who").innerHTML=S.user
-    ?`<button class="btn ghost sm" type="button" id="heartBtn"><span class="heart">♥ ${S.user.hearts}</span></button>`
+    ?`<button class="btn ghost sm" type="button" id="heartBtn"><span class="heart">🖋️ ${S.user.hearts}</span></button>`
     :`<button class="btn sm" type="button" id="login">로그인</button>`;
 }
 function needLogin(next){if(S.user)return false;afterLogin=next;setAuthMode("login");show("authModal");return true}
@@ -801,7 +801,7 @@ function openAuthor(id){
     <p style="margin:8px 0 0">${esc(a.bio)}</p>
     <div class="actions">${mine(a.id)?'<span class="tag on">내 크리에이터 페이지</span>':`
       <button class="btn ${f?"on":""}" type="button" data-follow="${a.id}">${f?"팔로잉 ✓":"팔로우"}</button>
-      <button class="btn ghost" type="button" data-tip="${a.id}">♥ 후원</button>`}</div></div>`;
+      <button class="btn ghost" type="button" data-tip="${a.id}">🖋️ 후원</button>`}</div></div>`;
   $("planSec").hidden=!a.plans.length;
   $("authorPlans").innerHTML=a.plans.map((pl,i)=>`<div class="plan ${lv===i?"mine":""}">
     <span class="note">${i+1}단계</span><b>${esc(pl.name)}</b><span>${esc(pl.perk)}</span>
@@ -846,13 +846,13 @@ $("memPay").onclick=()=>{const a=current,old=memLevel(a.id);
   sb.from("memberships").upsert({reader_id:S.user.id,author_id:a.id,level:pickLevel}).then(r=>r.error&&console.error(r.error));
   save();closeAll();toast(`${a.plans[pickLevel].name} 멤버십에 가입했어요 (데모)`);refresh()};
 
-/* ===== 하트 ===== */
+/* ===== 잉크 ===== */
 let pickPack=HEART_PACKS[1], afterCharge=null;
 function openCharge(need,next){
   if(needLogin(()=>openCharge(need,next)))return;
   afterCharge=next||null;
-  $("hNeed").textContent=need?`하트가 ${need - S.user.hearts}개 부족해요. 충전하면 바로 이어서 진행돼요.`:`지금 하트 ${S.user.hearts}개`;
-  $("heartPick").innerHTML=HEART_PACKS.map(n=>`<button type="button" data-pack="${n}" aria-pressed="${n===pickPack}"><b>♥ ${n}</b><span>${won(n*HEART_WON)}</span></button>`).join("");
+  $("hNeed").textContent=need?`잉크가 ${need - S.user.hearts}개 부족해요. 충전하면 바로 이어서 진행돼요.`:`지금 잉크 ${S.user.hearts}개`;
+  $("heartPick").innerHTML=HEART_PACKS.map(n=>`<button type="button" data-pack="${n}" aria-pressed="${n===pickPack}"><b>🖋️ ${n}</b><span>${won(n*HEART_WON)}</span></button>`).join("");
   $("heartPay").textContent=`${won(pickPack*HEART_WON)} 충전하기`;
   show("heartModal");
 }
@@ -861,7 +861,7 @@ $("heartPick").addEventListener("click",e=>{const b=e.target.closest("[data-pack
 function syncHearts(){
   sb.from("profiles").update({hearts:S.user.hearts}).eq("id",S.user.id).then(r=>r.error&&console.error(r.error));
 }
-$("heartPay").onclick=()=>{S.user.hearts+=pickPack;S.heartLog.push({t:"하트 충전",n:pickPack,at:Date.now()});syncHearts();save();closeAll();renderWho();toast(`하트 ${pickPack}개를 충전했어요 (데모)`);
+$("heartPay").onclick=()=>{S.user.hearts+=pickPack;S.heartLog.push({t:"잉크 충전",n:pickPack,at:Date.now()});syncHearts();save();closeAll();renderWho();toast(`잉크 ${pickPack}개를 충전했어요 (데모)`);
   const n=afterCharge;afterCharge=null;if(n)n()};
 function spend(n,authorId,what){S.user.hearts-=n;S.heartsIn[authorId]=(S.heartsIn[authorId]||0)+n;S.heartLog.push({t:what,n:-n,at:Date.now()});syncHearts()}
 
@@ -871,7 +871,7 @@ function buy(id){
   if(S.user.hearts<p.hearts){openCharge(p.hearts,()=>buy(id));return}
   spend(p.hearts,p.authorId,"만화 구매: "+p.title);S.bought.push(p.id);
   sb.from("bought").insert({reader_id:S.user.id,post_id:p.id}).then(r=>r.error&&console.error(r.error));
-  save();renderWho();toast(`하트 ${p.hearts}개로 열었어요`);view(id);refresh(true);
+  save();renderWho();toast(`잉크 ${p.hearts}개로 열었어요`);view(id);refresh(true);
 }
 
 /* ===== 후원 ===== */
@@ -879,17 +879,17 @@ let tipN=TIP_PACKS[1];
 function startTip(id){
   current=author(id);
   if(needLogin(()=>startTip(id)))return;
-  $("tipT").textContent=current.name+" 크리에이터에게 하트 후원";$("tipMsg").value="";
-  $("tipPick").innerHTML=TIP_PACKS.map(n=>`<button type="button" data-tn="${n}" aria-pressed="${n===tipN}" style="justify-content:center">♥ ${n}</button>`).join("");
-  $("tipPay").textContent=`하트 ${tipN}개 보내기`;show("tipModal");
+  $("tipT").textContent=current.name+" 크리에이터에게 잉크 후원";$("tipMsg").value="";
+  $("tipPick").innerHTML=TIP_PACKS.map(n=>`<button type="button" data-tn="${n}" aria-pressed="${n===tipN}" style="justify-content:center">🖋️ ${n}</button>`).join("");
+  $("tipPay").textContent=`잉크 ${tipN}개 보내기`;show("tipModal");
 }
 $("tipPick").addEventListener("click",e=>{const b=e.target.closest("[data-tn]");if(!b)return;tipN=+b.dataset.tn;
-  $("tipPick").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("tipPay").textContent=`하트 ${tipN}개 보내기`});
+  $("tipPick").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("tipPay").textContent=`잉크 ${tipN}개 보내기`});
 $("tipPay").onclick=()=>{
   if(S.user.hearts<tipN){const id=current.id,msg=$("tipMsg").value;closeAll();openCharge(tipN,()=>{startTip(id);$("tipMsg").value=msg});return}
   spend(tipN,current.id,current.name+" 크리에이터 후원");
   S.tips.push({authorId:current.id,hearts:tipN,msg:$("tipMsg").value.trim(),nick:S.user.nick,at:Date.now()});
-  save();closeAll();renderWho();toast(current.name+" 크리에이터에게 하트를 보냈어요")};
+  save();closeAll();renderWho();toast(current.name+" 크리에이터에게 잉크를 보냈어요")};
 
 /* ===== 만화 뷰어 ===== */
 let viewing=null;
@@ -903,8 +903,8 @@ async function view(id){
       <div style="font-size:48px">🔒</div>
       ${p.access==="plan"
         ?`<b>${esc(plan?.name||"멤버십")} 이상 회원만 볼 수 있어요</b><button class="btn" type="button" data-join="${a.id}" data-level="${p.planLevel}">멤버십 보기</button>`
-        :`<b>하트 ${p.hearts}개로 열 수 있어요</b>${p.memFree!=null&&a.plans[p.memFree-1]?`<span class="note">${esc(a.plans[p.memFree-1].name)} 이상 멤버십 회원은 무료</span>`:""}
-          <button class="btn gold" type="button" data-buy="${p.id}">♥ ${p.hearts} 사용해서 보기</button>`}
+        :`<b>잉크 ${p.hearts}개로 열 수 있어요</b>${p.memFree!=null&&a.plans[p.memFree-1]?`<span class="note">${esc(a.plans[p.memFree-1].name)} 이상 멤버십 회원은 무료</span>`:""}
+          <button class="btn gold" type="button" data-buy="${p.id}">🖋️ ${p.hearts} 사용해서 보기</button>`}
       </div>`;
     show("viewModal");return;
   }
@@ -986,9 +986,9 @@ async function renderStudio(){
   const memWon=m.plans.reduce((s,pl,i)=>s+pl.price*(m.memberCounts[i]||0),0);
   const hearts=S.heartsIn[m.id]||0;
   $("meName").textContent=m.emoji+" "+m.name;
-  $("sFollow").textContent=num(m.followers);$("sMembers").textContent=members;$("sHearts").textContent="♥ "+hearts;
+  $("sFollow").textContent=num(m.followers);$("sMembers").textContent=members;$("sHearts").textContent="🖋️ "+hearts;
   $("sIncome").textContent=won((memWon+hearts*HEART_WON)*AUTHOR_SHARE);
-  $("sCalc").textContent=`(멤버십 ${won(memWon)} + 하트 ${hearts}개 × ${HEART_WON}원) × 크리에이터 몫 ${Math.round(AUTHOR_SHARE*100)}% · 비율은 임시값`;
+  $("sCalc").textContent=`(멤버십 ${won(memWon)} + 잉크 ${hearts}개 × ${HEART_WON}원) × 크리에이터 몫 ${Math.round(AUTHOR_SHARE*100)}% · 비율은 임시값`;
   // 플랜 입력칸 (최대 3단계)
   $("planRows").innerHTML=[0,1,2].map(i=>{const pl=m.plans[i]||{};return `<div class="row3">
     <label>${i+1}단계 이름<input data-pn="${i}" maxlength="12" value="${esc(pl.name||"")}" placeholder="${["말랑 팬","찐 팬","최애 팬"][i]}"></label>
@@ -1003,7 +1003,7 @@ async function renderStudio(){
   $("myPosts").innerHTML=posts.length?posts.map(p=>`<li><span>${esc(p.title)} ${p.access==="free"?'<span class="tag">무료</span>':lockLabel(p)}</span><span class="note">♡ ${p.likes}</span></li>`).join("")
     :'<li class="note">아직 올린 만화가 없어요.</li>';
   const tips=S.tips.filter(t=>t.authorId===m.id);
-  $("tipList").innerHTML=tips.length?[...tips].reverse().map(t=>`<li><span><b>${esc(t.nick)}</b> ${esc(t.msg||"(메시지 없음)")}</span><span class="note">♥ ${t.hearts}</span></li>`).join("")
+  $("tipList").innerHTML=tips.length?[...tips].reverse().map(t=>`<li><span><b>${esc(t.nick)}</b> ${esc(t.msg||"(메시지 없음)")}</span><span class="note">🖋️ ${t.hearts}</span></li>`).join("")
     :'<li class="note">아직 받은 후원이 없어요.</li>';
 }
 function syncAccess(){const v=$("pAccess").value;$("pPlanWrap").hidden=v!=="plan";$("pPaidWrap").hidden=v!=="paid"}
@@ -1124,9 +1124,9 @@ function renderSettings(){
   $("setMems").innerHTML=mems.length?mems.map(([id,lv])=>{const a=author(id),pl=a.plans[lv];
     return `<li><span><b>${esc(a.name)}</b> · ${esc(pl?.name||"멤버십")}<br><span class="note">월 ${won(pl?.price||0)}</span></span><button class="btn ghost sm" type="button" data-cancel="${id}">해지</button></li>`}).join("")
     :'<li class="note">가입한 멤버십이 없어요.</li>';
-  $("setHearts").textContent="♥ "+S.user.hearts;
+  $("setHearts").textContent="🖋️ "+S.user.hearts;
   $("setHeartLog").innerHTML=S.heartLog.length?[...S.heartLog].reverse().slice(0,20).map(h=>`<li><span>${esc(h.t)} <span class="note">${fmtDate(h.at)}</span></span><span class="${h.n>0?"heart":"note"}">${h.n>0?"+":""}${h.n}</span></li>`).join("")
-    :'<li class="note">하트 사용 내역이 없어요.</li>';
+    :'<li class="note">잉크 사용 내역이 없어요.</li>';
   const bought=S.bought.map(post).filter(Boolean);
   $("setBought").innerHTML=bought.length?bought.map(p=>`<li><span>${esc(p.title)} <span class="note">${esc(author(p.authorId)?.name||"")}</span></span><button class="btn mint sm" type="button" data-view="${p.id}">보기</button></li>`).join("")
     :'<li class="note">구매한 만화가 없어요.</li>';
@@ -1135,7 +1135,7 @@ function renderSettings(){
     :'<li class="note">북마크한 만화가 없어요.</li>';
   const m=author(S.meAuthorId);$("myAuthorRow").hidden=!m;
   if(m){$("aeName").value=m.name;$("aeEmoji").value=m.emoji;$("aeBio").value=m.bio}
-  $("myHeartVal").textContent="♥ "+S.user.hearts;
+  $("myHeartVal").textContent="🖋️ "+S.user.hearts;
   $("myMemVal").textContent=(mems.length?mems.length+"개 ":"")+"›";
   $("myBmVal").textContent=(bms.length?bms.length+"개 ":"")+"›";
   mySection(mySec);
@@ -1216,7 +1216,7 @@ const SAMPLE = {
       at:Date.now()-86400000*2,cuts:[{e:"🐰",t:"드디어 내 집이다!"}]},
     {id:"sp2",authorId:"samp1",title:"7화: 첫 택배 참사 (비하인드)",desc:"멤버십 전용 비하인드 컷이에요",access:"plan",planLevel:0,
       likes:98,comments:[],at:Date.now()-86400000,cuts:[{e:"📦",t:"이게 왜 여기서 터지지"}]},
-    {id:"sp3",authorId:"samp1",title:"스페셜: 캐릭터 설정집",desc:"하트로 살 수 있는 단건 콘텐츠예요",access:"paid",hearts:8,memFree:1,
+    {id:"sp3",authorId:"samp1",title:"스페셜: 캐릭터 설정집",desc:"잉크로 살 수 있는 단건 콘텐츠예요",access:"paid",hearts:8,memFree:1,
       likes:210,comments:[],at:Date.now()-86400000*5,cuts:[{e:"✏️",t:"캐릭터 설정 대방출"}]},
     {id:"sp4",authorId:"samp2",title:"3화: 비 오는 날",desc:"비 오는 날엔 역시 이불 속",access:"free",likes:156,
       comments:[{nick:"독자3",t:"그림체 너무 좋아요"}],at:Date.now()-86400000*3,cuts:[{e:"🐱",t:"토독토독..."}]},
