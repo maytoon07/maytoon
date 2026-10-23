@@ -1,0 +1,1417 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>MAYTOON</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#E8486F">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="메이툰">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gothic+A1:wght@400;600;800&display=swap">
+<style>
+/* =========================================================
+   MAYTOON 데모 — 만화 크리에이터와 팬의 짝꿍 플랫폼
+   구조: 무료 팔로우 + 무료 만화 기본
+         + 크리에이터별 멤버십 플랜(단계) + 잉크로 사는 단건 유료 만화 + 잉크 후원
+   화면: 홈(추천/팔로잉) / 크리에이터 / 크리에이터 페이지 / 만화 뷰어 / 크리에이터센터
+   ========================================================= */
+:root{
+  --bg:#FBF8FA; --surface:#FFFFFF; --ink:#22192A; --muted:#6E6475; --line:#ECE4EE;
+  --pink:#E8486F; --pink-soft:#FDE8EE; --lav:#EEE8FF; --mint:#2F9E84; --gold:#C98A12; --gold-soft:#FFF3D6;
+  --display:"Jua","Gothic A1",sans-serif; --body:"Gothic A1",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#141018; --surface:#1E1823; --ink:#F1EAF3; --muted:#A99FAE; --line:#332A39;
+  --pink:#FF6F90; --pink-soft:#3A1E27; --lav:#2A2440; --mint:#52C4A8; --gold:#E9B54A; --gold-soft:#33291A; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding:0 max(18px,env(safe-area-inset-right,0px)) 56px max(18px,env(safe-area-inset-left,0px))}
+button{font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+[hidden]{display:none!important}
+ul{list-style:none;margin:0;padding:0}
+
+/* 헤더 */
+header{position:sticky;top:0;z-index:10;background:var(--surface);border-bottom:1px solid var(--line)}
+.hd{max-width:1080px;margin:0 auto;padding:12px max(18px,env(safe-area-inset-right,0px)) 12px max(18px,env(safe-area-inset-left,0px));display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:28px;color:var(--pink);cursor:pointer;line-height:1;border:0;background:none;padding:0;text-align:left}
+.logo small{display:block;font-family:var(--body);font-size:11px;color:var(--muted);margin-top:2px}
+nav{display:flex;gap:6px;margin-left:auto}
+nav button{border:0;background:none;color:var(--muted);font-weight:600;padding:8px 12px;border-radius:999px}
+nav button[aria-current="page"]{background:var(--pink-soft);color:var(--pink)}
+.who{display:flex;gap:8px;align-items:center}
+.heart{font-weight:800;color:var(--gold)}
+@media(max-width:620px){nav{order:3;width:100%;margin-left:0}nav button{flex:1}.who{margin-left:auto}}
+
+/* 공통 */
+.btn{border:0;border-radius:12px;padding:11px 18px;font-weight:800;background:var(--pink);color:#fff}
+.btn.ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink);font-weight:600}
+.btn.mint{background:var(--mint)}
+.btn.gold{background:var(--gold);color:#fff}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn.on{background:var(--ink);color:var(--bg)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px}
+h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance}
+h2{font-size:26px;margin-bottom:14px}
+h3{font-size:20px}
+.muted{color:var(--muted)}
+.note{font-size:13px;color:var(--muted)}
+.tag{display:inline-block;font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.tag.mem{background:var(--lav);border-color:transparent;color:var(--ink)}
+.tag.paid{background:var(--gold-soft);border-color:transparent;color:var(--gold)}
+.tag.on{background:var(--mint);border-color:var(--mint);color:#fff}
+section{margin-top:40px}
+.tabs{display:flex;gap:8px;margin-bottom:14px}
+.tabs button{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 16px;font-weight:600}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* 홈 */
+.hero{display:grid;grid-template-columns:1.3fr .7fr;gap:36px;align-items:center;padding-top:44px}
+.eyebrow{font-weight:800;color:var(--pink);font-size:14px}
+.hero h1{font-size:clamp(34px,5.5vw,54px);line-height:1.15;margin:10px 0 14px}
+.hero p{font-size:18px;color:var(--muted);margin:0;max-width:560px}
+.hero .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.art{background:linear-gradient(150deg,var(--pink-soft),var(--lav));border-radius:36px;padding:28px;display:grid;gap:10px}
+.bubble{background:var(--surface);border-radius:16px;padding:12px 14px;font-size:14px;box-shadow:0 4px 14px rgb(0 0 0/.05)}
+.bubble.r{justify-self:end;background:var(--pink);color:#fff}
+@media(max-width:760px){.hero{grid-template-columns:1fr;padding-top:24px}}
+
+/* 크리에이터 카드 */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:820px){.grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:520px){.grid{grid-template-columns:1fr}}
+.au{display:grid;gap:8px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:18px;color:var(--ink);align-content:start}
+.au:hover{border-color:var(--pink)}
+.av{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;font-size:32px;flex:none}
+.av.sm{width:36px;height:36px;border-radius:12px;font-size:18px}
+.av.big{width:104px;height:104px;font-size:52px;border-radius:28px}
+
+/* 만화 피드 */
+.feed{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:820px){.feed{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:480px){.feed{grid-template-columns:1fr}}
+.toon{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;display:grid;text-align:left;color:var(--ink);padding:0;cursor:pointer}
+.toon .cover{aspect-ratio:1/1;max-width:100%;display:grid;place-items:center;font-size:64px;position:relative;overflow:hidden}
+.toon .cover img{width:100%;height:100%;object-fit:cover}
+.toon .cover.lock>*{filter:blur(10px) saturate(.6)}
+.toon .cover .lk{position:absolute;inset:auto 10px 10px auto;filter:none;font-size:13px}
+.toon .cuts{position:absolute;left:10px;top:10px;filter:none!important;font-size:12px;background:rgb(0 0 0/.55);color:#fff;border-radius:999px;padding:2px 8px}
+.toon .meta{padding:12px 14px;display:grid;gap:4px}
+.toon .meta h3{font-size:17px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.toon .by{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.toon .stats{font-size:12px;color:var(--muted)}
+.empty{grid-column:1/-1;text-align:center;padding:36px 16px;border:1px dashed var(--line);border-radius:18px;color:var(--muted)}
+
+/* 크리에이터 페이지 */
+.profile{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.profile .info{flex:1;min-width:220px}
+.profile .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.plans{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.plan{border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:6px;align-content:start;background:var(--surface)}
+.plan.mine{border-color:var(--mint);box-shadow:0 0 0 1px var(--mint) inset}
+.plan b{font-family:var(--display);font-weight:400;font-size:19px}
+
+/* 뷰어 */
+.viewer{max-width:560px}
+.slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;border-radius:16px;scrollbar-width:none}
+.slides::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:1/1;display:grid;place-items:center;text-align:center;padding:24px;position:relative}
+.slide img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0}
+.slide .em{font-size:84px;line-height:1}
+.slide .say{font-family:var(--display);font-size:20px;background:var(--surface);color:var(--ink);border-radius:14px;padding:8px 14px;margin-top:10px}
+.dots{display:flex;justify-content:center;gap:6px}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}
+.dots i.on{background:var(--pink)}
+.navs{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.likebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.comments li{padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.comments li:first-child{border-top:0}
+.cform{display:flex;gap:8px}
+.cform input{flex:1;min-width:0}
+.gate{text-align:center;display:grid;gap:10px;padding:18px;border-radius:16px;background:var(--bg)}
+
+/* 크리에이터센터 */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:760px){.two{grid-template-columns:1fr}}
+.stats4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:620px){.stats4{grid-template-columns:repeat(2,1fr)}}
+.stats4 div{background:var(--bg);border-radius:14px;padding:12px}
+.stats4 b{display:block;font-size:22px;font-variant-numeric:tabular-nums}
+.stats4 span{font-size:12px;color:var(--muted)}
+form{display:grid;gap:12px}
+label{font-size:13px;font-weight:600;display:grid;gap:5px}
+input,select,textarea{font:inherit;width:100%;padding:11px 13px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink)}
+textarea{min-height:70px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1.2fr .8fr 1.6fr;gap:8px;align-items:end}
+@media(max-width:520px){.row,.row3{grid-template-columns:1fr}}
+.check{display:flex;gap:8px;align-items:center;font-weight:600}
+.check input{width:auto}
+.list li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.list li:first-child{border-top:0}
+
+/* 내 정보 리스트 메뉴 */
+.menu li{border-top:1px solid var(--line)}
+.menu li:first-child{border-top:0}
+.menu button{width:100%;background:none;border:0;display:flex;justify-content:space-between;align-items:center;padding:14px 16px;color:var(--ink);font-weight:600;text-align:left;font-size:15px}
+.menu-r{display:flex;align-items:center;gap:6px;color:var(--muted);font-weight:600;font-size:13px}
+
+/* 북마크 버튼 (만화 카드 위) */
+.bm{position:absolute;top:8px;right:8px;width:26px;height:26px;border-radius:999px;border:0;background:rgb(255 255 255/.85);display:grid;place-items:center;font-size:13px;filter:none!important;line-height:1}
+.bm.on{background:var(--pink-soft)}
+
+/* 모달 / 토스트 */
+.modal{position:fixed;inset:0;background:rgb(0 0 0/.5);display:flex;align-items:flex-end;justify-content:center;padding:16px;z-index:30}
+@media(min-width:560px){.modal{align-items:center}}
+.sheet{background:var(--surface);border-radius:22px;padding:22px;max-width:480px;width:100%;display:grid;gap:12px;max-height:92vh;overflow:auto}
+.sheet.wide{max-width:600px}
+.x{justify-self:end;border:0;background:none;font-size:24px;color:var(--muted);line-height:1;margin:-6px -6px -10px 0}
+.demo{font-size:12.5px;background:var(--bg);border-radius:10px;padding:10px 12px;color:var(--muted)}
+.pick{display:grid;gap:8px}
+.pick button{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:14px;padding:12px 14px}
+.pick button[aria-pressed="true"]{border-color:var(--pink);box-shadow:0 0 0 1px var(--pink) inset}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:12px;z-index:40;white-space:nowrap}
+footer{margin-top:56px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+
+/* ===== 모바일 우선 레이아웃 (폰 화면 기준, 컴퓨터에서는 가운데 폰 폭으로 보임) ===== */
+.wrap{max-width:520px;padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+.hd{max-width:520px;padding-block:10px;flex-wrap:nowrap}
+.logo{font-size:24px}
+header nav{display:none}
+.who{margin-left:auto}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding:4px max(8px,env(safe-area-inset-right,0px)) calc(4px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+.tabbar .in{display:flex;width:100%;max-width:520px}
+.tabbar button{flex:1;border:0;background:none;color:var(--muted);display:grid;justify-items:center;gap:2px;font-size:11.5px;font-weight:600;padding:6px 0;min-height:54px}
+.tabbar svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tabbar button[aria-current="page"]{color:var(--pink);background:none}
+.hero{grid-template-columns:1fr;gap:16px;padding-top:20px}
+.hero h1{font-size:30px}
+.hero p{font-size:16px}
+.art{display:none}
+section{margin-top:28px}
+h2{font-size:22px;margin-bottom:12px}
+.card{padding:16px;border-radius:18px}
+.btn{min-height:44px}
+.btn.sm{min-height:36px}
+.grid{grid-template-columns:1fr;gap:10px}
+.au{grid-template-columns:56px 1fr;column-gap:12px;row-gap:2px;align-items:center;padding:14px}
+.au .av{grid-row:span 3;width:56px;height:56px;font-size:28px;border-radius:16px}
+.au h3{font-size:18px}
+.feed{grid-template-columns:repeat(2,1fr);gap:10px}
+.toon{border-radius:16px}
+.toon .cover{font-size:48px}
+.toon .meta{padding:10px}
+.toon .meta h3{font-size:15px}
+.toon .meta>.note{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.two,.row,.row3{grid-template-columns:1fr}
+.stats4{grid-template-columns:repeat(2,1fr)}
+.profile{flex-direction:column;align-items:flex-start;gap:12px}
+.av.big{width:80px;height:80px;font-size:40px;border-radius:24px}
+.plans{grid-template-columns:1fr}
+.modal{align-items:flex-end;padding:0}
+.sheet{max-width:520px;border-radius:22px 22px 0 0;padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}
+#viewModal{background:var(--surface)}
+#viewModal .sheet{height:100%;max-height:none;border-radius:0;align-content:start;padding-top:calc(12px + env(safe-area-inset-top,0px))}
+.slides{border-radius:12px}
+.toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+footer{flex-direction:column;align-items:flex-start}
+@media (min-width:560px){.modal{align-items:center;padding:16px}.sheet{border-radius:22px;padding-bottom:22px}#viewModal .sheet{height:auto;max-height:92vh;border-radius:22px}}
+</style>
+</head>
+<body>
+<header><div class="hd">
+  <button class="logo" type="button" data-go="home">MAYTOON<small>만화 크리에이터와 팬의 짝꿍</small></button>
+  <nav>
+    <button type="button" data-go="home">홈</button>
+    <button type="button" data-go="authors">크리에이터</button>
+  </nav>
+  <div class="who" id="who"></div>
+</div></header>
+<nav class="tabbar" aria-label="메뉴"><div class="in">
+  <button type="button" data-go="home"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>홈</button>
+  <button type="button" data-go="authors"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.5 3.4-5.5 6.5-5.5s5.7 2 6.5 5.5"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.6c2.6.1 4.6 1.9 5.3 4.9"/></svg>크리에이터</button>
+  <button type="button" data-go="settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4.2-6.5 8-6.5s7 2.5 8 6.5"/></svg>내 정보</button>
+</div></nav>
+
+<div class="wrap">
+  <!-- 홈 (독자용: 돈 관련 문구 없음) -->
+  <main id="home" class="page">
+    <div class="hero" id="hero">
+      <div>
+        <span class="eyebrow">만화 팬들의 아지트</span>
+        <h1>좋아하는 크리에이터의<br>다음 장면까지 만나보세요</h1>
+        <p>좋아하는 크리에이터의 만화를 한곳에서 넘겨 보고, 팔로우하면 새 화가 바로 올라와요.</p>
+        <div class="actions"><button class="btn" type="button" data-go="authors">크리에이터 둘러보기</button></div>
+      </div>
+      <div class="art" aria-hidden="true">
+        <div class="bubble">다음 화 언제 나와요? 🥺</div>
+        <div class="bubble r">방금 올렸어요!</div>
+        <div class="bubble">팔로우 완료 ❤️</div>
+      </div>
+    </div>
+    <section>
+      <div class="tabs" role="group" aria-label="피드 종류">
+        <button type="button" data-feed="all" aria-pressed="true">추천</button>
+        <button type="button" data-feed="following" aria-pressed="false">팔로잉</button>
+      </div>
+      <div class="feed" id="homeFeed"></div>
+    </section>
+  </main>
+
+  <!-- 크리에이터 목록 -->
+  <main id="authors" class="page" hidden>
+    <section><h2>크리에이터</h2><div class="grid" id="allAuthors"></div></section>
+  </main>
+
+  <!-- 크리에이터 페이지 -->
+  <main id="author" class="page" hidden>
+    <section>
+      <button class="btn ghost sm" type="button" data-go="authors">← 크리에이터 목록</button>
+      <div class="card profile" id="authorHead" style="margin-top:14px"></div>
+    </section>
+    <section id="planSec"><h2>멤버십</h2><div class="plans" id="authorPlans"></div></section>
+    <section><h2>만화</h2><div class="feed" id="authorFeed"></div></section>
+  </main>
+
+  <!-- 크리에이터센터 -->
+  <main id="studio" class="page" hidden>
+    <section>
+      <h2>크리에이터센터</h2>
+      <div class="card" id="studioGate">
+        <p style="margin-top:0">크리에이터가 되려면 신청서를 보내주세요. 운영자가 확인하고 승인하면 활동을 시작할 수 있어요. 올리는 건 무료예요.</p>
+        <form id="regForm">
+          <label>크리에이터 이름<input id="regName" required maxlength="20" placeholder="예: 하루툰"></label>
+          <div class="row">
+            <label>한 줄 소개<input id="regBio" maxlength="40" placeholder="자취생의 하루를 그려요"></label>
+            <label>대표 이모지<input id="regEmoji" maxlength="2" placeholder="🐰"></label>
+          </div>
+          <button class="btn" type="submit">크리에이터 신청하기</button>
+        </form>
+      </div>
+
+      <div class="card" id="studioPending" hidden>
+        <p style="margin-top:0"><span class="tag">승인 대기 중</span></p>
+        <p id="pendingInfo" style="margin:10px 0 0"></p>
+        <p class="note" style="margin:10px 0 0">운영자가 신청을 확인하고 있어요. 승인되면 이 화면이 바로 크리에이터센터로 바뀌어요.</p>
+        <button class="btn ghost sm" type="button" id="appCancel" style="margin-top:12px">신청 취소하기</button>
+      </div>
+
+      <div class="card" id="studioRejected" hidden>
+        <p style="margin-top:0"><span class="tag">반려됨</span></p>
+        <p class="note" style="margin:10px 0 0">이번 신청은 승인되지 않았어요. 내용을 보완해서 다시 신청할 수 있어요.</p>
+        <button class="btn sm" type="button" id="appReapply" style="margin-top:12px">다시 신청하기</button>
+      </div>
+
+      <div id="studioMain" hidden>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap">
+            <h3 id="meName"></h3>
+            <button class="btn ghost sm" type="button" id="myPage">내 페이지 보기</button>
+          </div>
+          <div class="stats4" style="margin-top:14px">
+            <div><b id="sFollow">0</b><span>팔로워</span></div>
+            <div><b id="sMembers">0</b><span>멤버십 회원</span></div>
+            <div><b id="sHearts">0</b><span>받은 잉크 (단건+후원)</span></div>
+            <div><b id="sIncome">0원</b><span>이번 달 예상 수익</span></div>
+          </div>
+          <p class="note" style="margin:10px 0 0" id="sCalc"></p>
+        </div>
+
+        <div class="two" style="margin-top:16px">
+          <div class="card">
+            <h3 style="margin-bottom:12px">새 만화 올리기</h3>
+            <form id="postForm">
+              <label>제목<input id="pTitle" required maxlength="40" placeholder="12화: 첫 출근"></label>
+              <label>한 줄 설명<input id="pDesc" maxlength="60" placeholder="잠겨 있어도 이 문구는 보여요"></label>
+              <label>컷 이미지 (여러 장 선택 가능, 순서대로 넘겨 봐요)<input id="pImgs" type="file" accept="image/*" multiple></label>
+              <label>공개 범위
+                <select id="pAccess">
+                  <option value="free">누구나 무료</option>
+                  <option value="plan">멤버십 전용</option>
+                  <option value="paid">잉크로 구매 (단건)</option>
+                </select>
+              </label>
+              <label id="pPlanWrap" hidden>볼 수 있는 멤버십 (선택한 단계 이상)<select id="pPlan"></select></label>
+              <div id="pPaidWrap" hidden style="display:grid;gap:10px">
+                <label>가격 (잉크)<input id="pHearts" type="number" min="1" max="100" value="5"></label>
+                <label class="check"><input type="checkbox" id="pMemFree"> 멤버십 회원은 무료로 보기</label>
+              </div>
+              <button class="btn" type="submit">내 페이지에 올리기</button>
+            </form>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:6px">멤버십 플랜</h3>
+            <p class="note" style="margin:0 0 12px">비워두면 멤버십 없이 무료·단건 만화만 운영해요. 높은 단계 회원은 낮은 단계 만화도 볼 수 있어요.</p>
+            <form id="planForm">
+              <div id="planRows" style="display:grid;gap:10px"></div>
+              <button class="btn ghost" type="submit">멤버십 저장</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="two" style="margin-top:16px">
+          <div class="card"><h3 style="margin-bottom:10px">내 만화</h3><ul class="list" id="myPosts"></ul></div>
+          <div class="card"><h3 style="margin-bottom:10px">받은 후원 메시지</h3><ul class="list" id="tipList"></ul></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 운영자 전용: 주소 끝에 #admin 을 붙이면 들어올 수 있어요 (메뉴에 안 보여요) -->
+  <main id="admin" class="page" hidden>
+    <section>
+      <h2>운영자 승인</h2>
+      <div class="card" id="adminGate">
+        <p style="margin-top:0" class="note" id="adminGateMsg">운영자 계정으로 로그인해야 볼 수 있는 화면이에요.</p>
+        <button class="btn" type="button" id="adminLoginBtn">로그인하기</button>
+      </div>
+      <div id="adminMain" hidden>
+        <div class="card">
+          <h3 style="margin-top:0">승인 대기 중인 신청</h3>
+          <ul class="list" id="adminPending"></ul>
+        </div>
+        <div class="card" style="margin-top:16px">
+          <h3 style="margin-top:0">처리된 신청</h3>
+          <ul class="list" id="adminDone"></ul>
+        </div>
+        <button class="btn ghost sm" type="button" id="adminExit" style="margin-top:16px">운영자 화면 나가기</button>
+      </div>
+    </section>
+  </main>
+
+  <!-- 내 정보 -->
+  <main id="settings" class="page" hidden>
+    <section>
+      <h2>내 정보</h2>
+      <div class="card" id="setGate">
+        <p style="margin-top:0">로그인하면 내 정보와 팔로우, 멤버십, 잉크 내역을 관리할 수 있어요.</p>
+        <button class="btn" type="button" id="login2">로그인</button>
+      </div>
+
+      <div id="setMain" hidden>
+        <!-- 메뉴 -->
+        <div id="myMenu">
+          <div class="card" style="padding:0">
+            <ul class="menu">
+              <li><button type="button" data-mysec="hearts"><span>잉크</span><span class="menu-r"><span class="heart" id="myHeartVal"></span> ›</span></button></li>
+              <li><button type="button" data-mysec="mems"><span>멤버십</span><span class="menu-r" id="myMemVal">›</span></button></li>
+              <li><button type="button" data-mysec="bought"><span>구매 항목</span><span class="menu-r">›</span></button></li>
+              <li><button type="button" data-mysec="bookmarks"><span>북마크</span><span class="menu-r" id="myBmVal">›</span></button></li>
+              <li><button type="button" data-mysec="follows"><span>팔로잉 크리에이터</span><span class="menu-r">›</span></button></li>
+            </ul>
+          </div>
+          <div class="card" style="padding:0;margin-top:12px">
+            <ul class="menu">
+              <li><button type="button" data-mysec="profile"><span>프로필</span><span class="menu-r">›</span></button></li>
+              <li><button type="button" data-mysec="notify"><span>알림 설정</span><span class="menu-r">›</span></button></li>
+              <li id="myAuthorRow" hidden><button type="button" data-mysec="author"><span>크리에이터 정보</span><span class="menu-r">›</span></button></li>
+              <li><button type="button" data-mysec="account"><span>계정</span><span class="menu-r">›</span></button></li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- 하위 화면 (한 번에 하나씩) -->
+        <div id="mySecWrap" hidden>
+          <button class="btn ghost sm" type="button" data-mysec="menu" style="margin-bottom:14px">← 내 정보</button>
+
+          <div class="card" id="sec-hearts">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+              <h3 style="margin:0">잉크 <span class="heart" id="setHearts"></span></h3>
+              <button class="btn sm" type="button" id="setCharge">충전</button>
+            </div>
+            <ul class="list" id="setHeartLog"></ul>
+          </div>
+
+          <div class="card" id="sec-mems">
+            <h3 style="margin-bottom:10px">가입한 멤버십</h3>
+            <ul class="list" id="setMems"></ul>
+          </div>
+
+          <div class="card" id="sec-bought">
+            <h3 style="margin-bottom:10px">구매한 만화</h3>
+            <ul class="list" id="setBought"></ul>
+          </div>
+
+          <div class="card" id="sec-bookmarks">
+            <h3 style="margin-bottom:10px">북마크</h3>
+            <ul class="list" id="setBookmarks"></ul>
+          </div>
+
+          <div class="card" id="sec-follows">
+            <h3 style="margin-bottom:10px">팔로잉 크리에이터</h3>
+            <ul class="list" id="setFollows"></ul>
+          </div>
+
+          <div class="card" id="sec-profile">
+            <h3 style="margin-bottom:12px">프로필</h3>
+            <form id="profileForm">
+              <label>닉네임<input id="setNick" required maxlength="12"></label>
+              <label>이메일<input id="setEmail" type="email" readonly></label>
+              <p class="note" style="margin:0">이메일은 로그인에 쓰여서 여기서 바꿀 수 없어요.</p>
+              <button class="btn ghost" type="submit">저장</button>
+            </form>
+          </div>
+
+          <div class="card" id="sec-notify">
+            <h3 style="margin-bottom:12px">알림</h3>
+            <div style="display:grid;gap:10px">
+              <label class="check"><input type="checkbox" id="prNew"> 팔로우한 크리에이터가 새 만화를 올리면 알림</label>
+              <label class="check"><input type="checkbox" id="prReply"> 내 댓글에 답글이 달리면 알림</label>
+              <label class="check"><input type="checkbox" id="prNews"> 메이툰 소식과 이벤트 알림</label>
+            </div>
+            <p class="note" style="margin:12px 0 0">바꾸면 바로 저장돼요.</p>
+          </div>
+
+          <div class="card" id="sec-author">
+            <h3 style="margin-bottom:12px">크리에이터 정보</h3>
+            <form id="authorEditForm">
+              <div class="row">
+                <label>크리에이터 이름<input id="aeName" required maxlength="20"></label>
+                <label>대표 이모지<input id="aeEmoji" maxlength="2"></label>
+              </div>
+              <label>한 줄 소개<input id="aeBio" maxlength="40"></label>
+              <button class="btn ghost" type="submit">크리에이터 정보 저장</button>
+            </form>
+          </div>
+
+          <div class="card" id="sec-account">
+            <h3 style="margin-bottom:12px">계정</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button class="btn ghost" type="button" id="logout">로그아웃</button>
+              <button class="btn ghost" type="button" id="leaveAsk" style="color:var(--pink)">회원 탈퇴</button>
+            </div>
+            <div class="gate" id="leaveBox" hidden style="margin-top:12px;text-align:left">
+              <b>정말 탈퇴할까요?</b>
+              <span class="note">팔로우, 멤버십, 남은 잉크, 구매한 만화가 모두 사라져요. 크리에이터로 등록했다면 올린 만화도 함께 삭제돼요.</span>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn" type="button" id="leaveYes">탈퇴하기</button>
+                <button class="btn ghost" type="button" id="leaveNo">취소</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 이용약관 -->
+  <main id="terms" class="page" hidden>
+    <section>
+      <button class="btn ghost sm" type="button" data-go="home" style="margin-bottom:12px">← 홈으로</button>
+      <h2>메이툰(MAYTOON) 이용약관</h2>
+      <div class="card" style="line-height:1.7">
+        <p class="note">※ 메이툰은 현재 사업자 등록 전 개인이 운영하는 베타(테스트) 서비스예요. 아래 약관은 서비스 운영 방침을 정리한 것이며, 정식 서비스 전환 시 더 정비될 수 있어요.</p>
+
+        <h3>제1조 (목적)</h3>
+        <p>이 약관은 메이툰(이하 "회사" 또는 "메이툰")이 제공하는 인스타툰 크리에이터 구독 서비스(이하 "서비스")의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항을 정하는 것을 목적으로 합니다.</p>
+
+        <h3>제2조 (정의)</h3>
+        <p>① "회원"이란 이 약관에 동의하고 메이툰에 가입하여 서비스를 이용하는 자를 말합니다.<br>
+        ② "크리에이터"란 운영자의 승인을 받아 자신의 만화 콘텐츠를 메이툰에 게시하는 회원을 말합니다.<br>
+        ③ "잉크"란 유료 콘텐츠 구매 및 크리에이터 후원에 사용되는 서비스 내 가상 재화를 말합니다.<br>
+        ④ "멤버십"이란 특정 크리에이터가 설정한 구독 플랜에 회원이 가입하여 전용 콘텐츠를 열람할 수 있게 되는 것을 말합니다.</p>
+
+        <h3>제3조 (약관의 효력 및 변경)</h3>
+        <p>① 이 약관은 서비스 화면에 게시하거나 기타의 방법으로 회원에게 공지함으로써 효력이 발생합니다.<br>
+        ② 회사는 필요한 경우 관련 법령을 위반하지 않는 범위에서 이 약관을 변경할 수 있으며, 변경된 약관은 서비스 내 공지를 통해 효력이 발생합니다.</p>
+
+        <h3>제4조 (회원가입)</h3>
+        <p>① 회원가입은 이용자가 약관의 내용에 동의하고 이메일과 비밀번호를 입력하여 가입을 신청하면, 회사가 이를 승낙함으로써 성립합니다.<br>
+        ② 크리에이터로 활동하려면 별도의 신청 절차를 거쳐 운영자의 승인을 받아야 합니다.</p>
+
+        <h3>제5조 (서비스의 내용)</h3>
+        <p>메이툰은 다음과 같은 서비스를 제공합니다.<br>
+        1. 크리에이터의 만화 콘텐츠 게시 및 열람<br>
+        2. 크리에이터별 멤버십(구독) 가입<br>
+        3. 잉크를 이용한 단건 콘텐츠 구매 및 크리에이터 후원<br>
+        4. 좋아요, 댓글, 팔로우, 북마크 등 부가 기능</p>
+
+        <h3>제6조 (크리에이터의 의무)</h3>
+        <p>① 크리에이터는 본인이 저작권 등 정당한 권리를 보유한 콘텐츠만 게시해야 하며, 타인의 저작권을 침해하는 콘텐츠를 게시해서는 안 됩니다.<br>
+        ② 크리에이터는 음란물, 폭력적 콘텐츠, 불법적인 내용, 타인을 비방하거나 명예를 훼손하는 콘텐츠를 게시해서는 안 됩니다.<br>
+        ③ 위 사항을 위반한 콘텐츠는 사전 통지 없이 삭제될 수 있으며, 반복 위반 시 크리에이터 자격이 박탈될 수 있습니다.</p>
+
+        <h3>제7조 (이용자의 의무)</h3>
+        <p>회원은 서비스 이용 시 관련 법령, 이 약관의 규정, 이용안내 및 서비스와 관련하여 공지한 사항을 준수해야 하며, 타인의 계정을 도용하거나 서비스를 비정상적인 방법으로 이용해서는 안 됩니다.</p>
+
+        <h3>제8조 (잉크 및 유료 콘텐츠)</h3>
+        <p>① 현재 메이툰의 "잉크 충전"은 테스트(데모) 기능으로, <b>실제 결제가 이루어지지 않습니다.</b> 실제 결제 기능이 도입되면 이 조항은 사전 공지 후 개정됩니다.<br>
+        ② 실제 결제 기능 도입 이후의 환불, 취소 등 정책은 관련 법령(전자상거래법 등)에 따라 별도로 안내합니다.</p>
+
+        <h3>제9조 (콘텐츠의 저작권)</h3>
+        <p>크리에이터가 게시한 콘텐츠의 저작권은 해당 크리에이터에게 있습니다. 회사는 서비스 운영 및 노출에 필요한 범위 내에서만 콘텐츠를 사용합니다.</p>
+
+        <h3>제10조 (서비스의 변경 및 중단)</h3>
+        <p>회사는 운영상, 기술상의 필요에 따라 서비스의 전부 또는 일부를 변경하거나 중단할 수 있으며, 이 경우 사전에 공지합니다. 다만 긴급한 사정이 있는 경우 사후에 공지할 수 있습니다.</p>
+
+        <h3>제11조 (이용 제한 및 계약 해지)</h3>
+        <p>① 회원은 언제든지 "내 정보 > 계정 탈퇴"를 통해 이용계약을 해지할 수 있습니다.<br>
+        ② 회사는 회원이 이 약관을 위반한 경우 사전 통지 후 이용을 제한하거나 계약을 해지할 수 있습니다.</p>
+
+        <h3>제12조 (면책조항)</h3>
+        <p>① 회사는 천재지변, 서비스 제공업체(Supabase, GitHub Pages 등)의 장애 등 회사의 고의 또는 과실이 없는 사유로 발생한 서비스 중단에 대해 책임을 지지 않습니다.<br>
+        ② 회사는 크리에이터가 게시한 콘텐츠의 내용에 대해 책임을 지지 않으며, 콘텐츠로 인해 발생한 분쟁은 원칙적으로 당사자 간 해결을 원칙으로 합니다.</p>
+
+        <h3>제13조 (분쟁 해결)</h3>
+        <p>이 약관과 관련하여 분쟁이 발생한 경우, 회사와 회원은 분쟁의 해결을 위해 성실히 협의하며, 협의가 되지 않을 경우 관련 법령 및 상관례에 따릅니다.</p>
+
+        <p class="note" style="margin-top:20px">부칙: 이 약관은 2026년 10월 24일부터 적용됩니다.<br>문의: hajihoo.0607@gmail.com</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- 개인정보처리방침 -->
+  <main id="privacy" class="page" hidden>
+    <section>
+      <button class="btn ghost sm" type="button" data-go="home" style="margin-bottom:12px">← 홈으로</button>
+      <h2>개인정보처리방침</h2>
+      <div class="card" style="line-height:1.7">
+        <p class="note">※ 메이툰은 현재 사업자 등록 전 개인이 운영하는 베타(테스트) 서비스예요.</p>
+
+        <p>메이툰(이하 "회사")은 「개인정보 보호법」 등 관련 법령을 준수하며, 이용자의 개인정보를 소중히 다루고 있습니다. 본 방침은 회사가 어떤 개인정보를 수집하고, 어떻게 이용·보관·파기하는지 안내합니다.</p>
+
+        <h3>1. 수집하는 개인정보 항목</h3>
+        <p>① 회원가입 시: 이메일 주소, 비밀번호(암호화되어 저장되며 회사도 원문을 알 수 없음), 닉네임<br>
+        ② 크리에이터 신청 시: 크리에이터명, 소개글, 대표 이모지<br>
+        ③ 서비스 이용 과정에서 자동으로 생성되는 정보: 팔로우·좋아요·북마크·멤버십·구매 내역, 댓글 내용, 가입일시</p>
+
+        <h3>2. 개인정보의 수집 및 이용목적</h3>
+        <p>① 회원 식별 및 로그인 기능 제공<br>
+        ② 크리에이터 신청 심사 및 승인 처리<br>
+        ③ 멤버십·구매·좋아요·댓글 등 서비스 핵심 기능 제공<br>
+        ④ 부정 이용 방지 및 서비스 운영</p>
+
+        <h3>3. 개인정보의 보유 및 이용기간</h3>
+        <p>회원 탈퇴 시 지체 없이 파기합니다. 다만 관련 법령에 따라 보존할 필요가 있는 경우 해당 법령에서 정한 기간 동안 보관합니다.</p>
+
+        <h3>4. 개인정보의 제3자 제공</h3>
+        <p>회사는 이용자의 동의 없이 개인정보를 제3자에게 제공하지 않습니다. 다만 법령에 의거하거나 수사기관의 적법한 요청이 있는 경우는 예외로 합니다.</p>
+
+        <h3>5. 개인정보처리의 위탁</h3>
+        <p>회사는 안정적인 서비스 제공을 위해 아래와 같이 개인정보 처리를 위탁하고 있습니다.<br>
+        ① Supabase Inc. — 회원 인증(로그인) 및 데이터베이스 운영<br>
+        ② GitHub, Inc. (GitHub Pages) — 서비스 화면(정적 파일) 호스팅<br>
+        수탁업체는 모두 해외 사업자이며, 각 사의 개인정보처리방침에 따라 정보가 보호됩니다.</p>
+
+        <h3>6. 이용자의 권리와 행사방법</h3>
+        <p>이용자는 언제든지 본인의 개인정보를 조회하거나 수정할 수 있으며, 서비스 내 "계정 탈퇴" 기능을 통해 삭제를 요청할 수 있습니다. 그 외 문의사항은 아래 연락처로 요청할 수 있습니다.</p>
+
+        <h3>7. 개인정보의 파기절차 및 방법</h3>
+        <p>회원 탈퇴 등으로 개인정보 보유기간이 경과하거나 처리 목적이 달성된 경우, 해당 정보를 지체 없이 데이터베이스에서 삭제합니다.</p>
+
+        <h3>8. 쿠키 등 자동 수집 장치</h3>
+        <p>서비스는 로그인 상태 유지 등을 위해 브라우저의 localStorage(로컬 저장소)를 사용합니다. 이는 이용자의 기기에만 저장되며, 브라우저 설정을 통해 삭제할 수 있습니다.</p>
+
+        <h3>9. 개인정보 보호책임자</h3>
+        <p>개인정보 관련 문의, 불만처리, 피해구제 등을 위해 아래와 같이 개인정보 보호책임자를 두고 있습니다.<br>
+        이메일: hajihoo.0607@gmail.com</p>
+
+        <h3>10. 고지의 의무</h3>
+        <p>이 방침의 내용이 변경되는 경우 서비스 내 공지사항을 통해 고지합니다.</p>
+
+        <p class="note" style="margin-top:20px">부칙: 이 방침은 2026년 10월 24일부터 적용됩니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span class="note">© MAYTOON · 베타 서비스 (아직 실제 결제는 지원하지 않아요) · <button class="btn ghost sm" type="button" data-go="terms" style="padding:2px 8px">이용약관</button> · <button class="btn ghost sm" type="button" data-go="privacy" style="padding:2px 8px">개인정보처리방침</button></span>
+    <span style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn ghost sm" type="button" data-go="studio">크리에이터이신가요? 크리에이터센터</button>
+      <button class="btn ghost sm" id="fillSample" type="button">둘러보기용 샘플 채우기</button>
+      <button class="btn ghost sm" id="reset" type="button">데모 초기화</button>
+    </span>
+  </footer>
+</div>
+
+<!-- 로그인 -->
+<div class="modal" id="authModal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="authT">
+  <button class="x" type="button" data-close aria-label="닫기">×</button>
+  <h2 id="authT" style="margin:0">로그인</h2>
+  <form id="authForm">
+    <label>이메일<input id="aEmail" type="email" required placeholder="me@example.com" autocomplete="email"></label>
+    <label>비밀번호<input id="aPass" type="password" required minlength="6" placeholder="6자 이상" autocomplete="current-password"></label>
+    <label id="aNickWrap" hidden>닉네임<input id="aNick" maxlength="12" placeholder="댓글에 표시돼요"></label>
+    <button class="btn" type="submit" id="authSubmit">로그인</button>
+  </form>
+  <button class="btn ghost sm" type="button" id="authForgot" style="margin-top:8px;width:100%">비밀번호를 잊으셨나요?</button>
+  <button class="btn ghost sm" type="button" id="authToggle" style="margin-top:4px;width:100%">계정이 없으신가요? 회원가입</button>
+  <div class="demo" id="authNote">실제 이메일·비밀번호 계정이에요. 비밀번호는 Supabase에 안전하게 암호화되어 저장돼요.</div>
+</div></div>
+
+<!-- 비밀번호 재설정 -->
+<div class="modal" id="resetModal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="resetT">
+  <button class="x" type="button" data-close aria-label="닫기">×</button>
+  <h2 id="resetT" style="margin:0">새 비밀번호 설정</h2>
+  <form id="resetForm">
+    <label>새 비밀번호<input id="rPass" type="password" required minlength="6" placeholder="6자 이상" autocomplete="new-password"></label>
+    <button class="btn" type="submit" id="resetSubmit">비밀번호 변경하기</button>
+  </form>
+  <div class="demo">이메일로 받은 링크를 통해 들어온 화면이에요. 새 비밀번호를 입력하면 바로 적용돼요.</div>
+</div></div>
+
+<!-- 멤버십 가입 -->
+<div class="modal" id="memModal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="memT">
+  <button class="x" type="button" data-close aria-label="닫기">×</button>
+  <h2 id="memT" style="margin:0"></h2>
+  <div class="pick" id="memPick"></div>
+  <button class="btn" type="button" id="memPay"></button>
+  <div class="demo">데모라서 실제 결제는 되지 않아요. 실서비스에서는 정기결제 창이 열려요.</div>
+</div></div>
+
+<!-- 잉크 충전 -->
+<div class="modal" id="heartModal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="hT">
+  <button class="x" type="button" data-close aria-label="닫기">×</button>
+  <h2 id="hT" style="margin:0">잉크 충전</h2>
+  <p class="note" style="margin:0" id="hNeed"></p>
+  <div class="pick" id="heartPick"></div>
+  <button class="btn" type="button" id="heartPay"></button>
+  <div class="demo">데모라서 실제 결제는 되지 않아요.</div>
+</div></div>
+
+<!-- 후원 -->
+<div class="modal" id="tipModal" hidden><div class="sheet" role="dialog" aria-modal="true" aria-labelledby="tipT">
+  <button class="x" type="button" data-close aria-label="닫기">×</button>
+  <h2 id="tipT" style="margin:0"></h2>
+  <div class="pick" id="tipPick" style="grid-template-columns:repeat(4,1fr)"></div>
+  <label>응원 메시지<textarea id="tipMsg" maxlength="100" placeholder="크리에이터님 덕분에 월요일을 버텨요!"></textarea></label>
+  <button class="btn" type="button" id="tipPay"></button>
+</div></div>
+
+<!-- 만화 뷰어 -->
+<div class="modal" id="viewModal" hidden><div class="sheet wide viewer" role="dialog" aria-modal="true" aria-labelledby="vT">
+  <button class="x" type="button" data-close aria-label="닫기">×</button>
+  <div class="by" id="vBy" style="display:flex;gap:8px;align-items:center"></div>
+  <h2 id="vT" style="margin:0"></h2>
+  <div id="vBody"></div>
+</div></div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+/* ===== 설정값: 정해지면 여기만 바꾸면 돼요 ===== */
+const AUTHOR_SHARE = 0.7;      // 멤버십·잉크 수익 중 크리에이터 몫 (임시값)
+const HEART_WON = 100;         // 잉크 1개 = 100원 (임시값) — 변수명은 내부적으로 heart를 그대로 씀
+const HEART_PACKS = [10,30,50,100];
+const TIP_PACKS = [5,10,30,50];
+
+/* ===== Supabase (로그인·회원가입용) =====
+   anon/publishable 키는 브라우저에 노출돼도 안전한 키예요 (RLS가 실제 접근을 막아줌) */
+const SUPABASE_URL = "https://sfkfxzianstsholfhekq.supabase.co";
+const SUPABASE_KEY = "sb_publishable_UG2duYkbtIOP8wI3_eWcSA_KJMY28Ld";
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ===== 처음 상태 (예시 데이터 없음) =====
+   post.access: "free" 누구나 / "plan" 멤버십 전용(planLevel 이상) / "paid" 잉크 구매(memFree면 해당 멤버십은 무료)
+   post.cuts: 이미지 없는 예시 컷 [{e:이모지, t:대사}] / post.imgs: 실제 업로드한 컷 이미지들 */
+const SEED = {
+  user: null,                 // {id, email, nick, hearts}
+  authedUid: null,            // 마지막으로 로그인했던 Supabase 계정 id (계정 바뀌면 개인 기록 초기화용)
+  meAuthorId: null,
+  follows: [],                // 팔로우한 크리에이터 id
+  memberships: {},            // {크리에이터id: 가입한 플랜 단계(0부터)}
+  bought: [],                 // 잉크로 산 만화 id
+  liked: [],
+  bookmarks: [],               // 나중에 보려고 담아둔 만화 id
+  heartsIn: {},               // {크리에이터id: 받은 잉크 합계}
+  tips: [],                   // {authorId, hearts, msg, nick, at}
+  authors: [],
+  posts: [],
+  applications: []            // 크리에이터 신청 {id, by(신청자 이메일), name, bio, emoji, status:"pending"/"approved"/"rejected", at, authorId}
+};
+
+/* ===== 저장 ===== */
+let S;
+function load(){try{S=JSON.parse(localStorage.getItem("maytoon3"))}catch(e){S=null}
+  if(!S||!S.authors||!S.posts)S=JSON.parse(JSON.stringify(SEED));
+  S.heartLog=S.heartLog||[];                                   // {t:내용, n:+충전/-사용, at}
+  S.prefs=S.prefs||{newToon:true,reply:true,news:false};
+  S.bookmarks=S.bookmarks||[];
+  S.applications=S.applications||[]}
+function save(){try{localStorage.setItem("maytoon3",JSON.stringify(S));return true}
+  catch(e){toast("저장 공간이 가득 찼어요. 더 작은 이미지로 올려주세요");return false}}
+load();
+
+/* ===== 도우미 ===== */
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const won=n=>Math.round(n).toLocaleString("ko-KR")+"원";
+const num=n=>n>=10000?(n/10000).toFixed(1)+"만":n.toLocaleString("ko-KR");
+const author=id=>S.authors.find(a=>a.id===id);
+const post=id=>S.posts.find(p=>p.id===id);
+const mine=id=>id===S.meAuthorId;
+const memLevel=id=>S.memberships[id]??-1;
+function canSee(p){
+  if(mine(p.authorId)||p.access==="free")return true;
+  if(p.access==="plan")return memLevel(p.authorId)>=p.planLevel;
+  if(p.access==="paid")return S.bought.includes(p.id)||(p.memFree!=null&&memLevel(p.authorId)>=p.memFree-1);
+  return false;
+}
+function lockLabel(p){
+  const a=author(p.authorId);
+  if(p.access==="plan")return `<span class="tag mem">🔒 ${esc(a.plans[p.planLevel]?.name||"멤버십")} 이상</span>`;
+  if(p.access==="paid")return `<span class="tag paid">🖋️ ${p.hearts}</span>`;
+  return "";
+}
+function toast(t){const e=$("toast");e.textContent=t;e.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>e.hidden=true,2200)}
+function show(id){$(id).hidden=false;const f=$(id).querySelector("input:not([type=checkbox]),textarea,.btn");if(f)f.focus()}
+function closeAll(){document.querySelectorAll(".modal").forEach(m=>m.hidden=true)}
+let current=null, afterLogin=null, feedMode="all";
+
+/* ===== 화면 이동 ===== */
+function go(page,keepSec){
+  document.querySelectorAll(".page").forEach(p=>p.hidden=p.id!==page);
+  const tab=page==="author"?"authors":page;
+  document.querySelectorAll("nav button").forEach(b=>b.setAttribute("aria-current",b.dataset.go===tab?"page":"false"));
+  if(page==="home")renderHome();
+  if(page==="authors")$("allAuthors").innerHTML=S.authors.length?S.authors.map(card).join(""):'<div class="empty">아직 등록한 크리에이터가 없어요.</div>';
+  if(page==="studio")renderStudio();
+  if(page==="admin")renderAdmin();
+  if(page==="settings"){if(!keepSec)mySec="menu";renderSettings()}
+  window.scrollTo(0,0);
+}
+
+/* ===== 로그인 ===== */
+function renderWho(){
+  $("who").innerHTML=S.user
+    ?`<button class="btn ghost sm" type="button" id="heartBtn"><span class="heart">🖋️ ${S.user.hearts}</span></button>`
+    :`<button class="btn sm" type="button" id="login">로그인</button>`;
+}
+function needLogin(next){if(S.user)return false;afterLogin=next;setAuthMode("login");show("authModal");return true}
+
+let authMode="login";
+function setAuthMode(mode){
+  authMode=mode;
+  $("authT").textContent=mode==="login"?"로그인":"회원가입";
+  $("authSubmit").textContent=mode==="login"?"로그인":"회원가입하기";
+  $("aNickWrap").hidden=mode!=="signup";
+  $("aNick").required=mode==="signup";
+  $("authToggle").textContent=mode==="login"?"계정이 없으신가요? 회원가입":"이미 계정이 있으신가요? 로그인";
+  $("aPass").autocomplete=mode==="login"?"current-password":"new-password";
+}
+$("authToggle").onclick=()=>setAuthMode(authMode==="login"?"signup":"login");
+
+// 비밀번호 찾기: 이메일로 재설정 링크를 보내고, 그 링크를 눌러 돌아오면 새 비밀번호 입력창이 자동으로 뜸
+$("authForgot").onclick=async()=>{
+  const email=$("aEmail").value.trim();
+  if(!email){toast("이메일을 먼저 입력해주세요");return}
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname+"#reset"});
+  if(error){toast("재설정 메일 전송 실패: "+error.message);return}
+  closeAll();toast(email+"로 재설정 링크를 보냈어요. 메일함을 확인해주세요");
+};
+
+// Supabase 계정(auth.users)에 처음 로그인하면 profiles 행을 만들고, S.user를 채움
+async function afterAuth(authUser,nickIfNew){
+  let{data:profile}=await sb.from("profiles").select("*").eq("id",authUser.id).maybeSingle();
+  if(!profile){
+    const nick=nickIfNew||authUser.email.split("@")[0];
+    const ins=await sb.from("profiles").insert({id:authUser.id,nick}).select().single();
+    if(ins.error){toast("프로필 생성 실패: "+ins.error.message);return}
+    profile=ins.data;
+  }
+  if(S.authedUid!==authUser.id){                                      // 이 브라우저에서 다른 계정으로 로그인하면 개인 기록 새로 시작
+    Object.assign(S,{follows:[],memberships:{},bought:[],liked:[],bookmarks:[],heartLog:[],meAuthorId:null});
+    S.authedUid=authUser.id;
+  }
+  S.user={id:authUser.id,email:authUser.email,nick:profile.nick,hearts:profile.hearts,isAdmin:!!profile.is_admin};
+  save();closeAll();renderWho();toast("반가워요, "+S.user.nick+" 님");
+  loadMyInteractions();
+  const n=afterLogin;afterLogin=null;if(n)n();else refresh();
+}
+$("authForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const email=$("aEmail").value.trim(),password=$("aPass").value;
+  const btn=$("authSubmit");btn.disabled=true;
+  try{
+    if(authMode==="signup"){
+      const{data,error}=await sb.auth.signUp({email,password});
+      if(error)throw error;
+      if(!data.session){toast("가입 완료! 메일함에서 인증 링크를 눌러주세요");closeAll();btn.disabled=false;return}
+      await afterAuth(data.user,$("aNick").value.trim());
+    }else{
+      const{data,error}=await sb.auth.signInWithPassword({email,password});
+      if(error)throw error;
+      await afterAuth(data.user);
+    }
+  }catch(err){
+    toast(err.message==="Invalid login credentials"?"이메일 또는 비밀번호가 맞지 않아요":err.message);
+  }
+  btn.disabled=false;
+});
+// 새로고침해도 로그인 상태 유지
+sb.auth.getSession().then(({data:{session}})=>{if(session)afterAuth(session.user)});
+
+// 비밀번호 재설정 메일의 링크를 타고 들어오면 Supabase가 이 이벤트를 보내줌 → 새 비밀번호 입력창 띄우기
+sb.auth.onAuthStateChange((event)=>{if(event==="PASSWORD_RECOVERY"){closeAll();show("resetModal")}});
+$("resetForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const pass=$("rPass").value;
+  const btn=$("resetSubmit");btn.disabled=true;
+  const{error}=await sb.auth.updateUser({password:pass});
+  btn.disabled=false;
+  if(error){toast("비밀번호 변경 실패: "+error.message);return}
+  e.target.reset();closeAll();history.replaceState(null,"",location.pathname+location.search);
+  toast("비밀번호가 바뀌었어요. 새 비밀번호로 다시 로그인해주세요");
+});
+
+/* ===== 공개 데이터(크리에이터·만화)는 Supabase가 진짜 출처 — 다른 사람 화면에도 보이게 ===== */
+async function loadShared(){
+  try{
+    const[{data:authors,error:e1},{data:plans,error:e2},{data:posts,error:e3},{data:comments,error:e4}]=await Promise.all([
+      sb.from("authors").select("*"),
+      sb.from("plans").select("*"),
+      sb.from("posts").select("*").order("created_at",{ascending:false}),
+      sb.from("comments").select("post_id")
+    ]);
+    if(e1||e2||e3||e4||!authors||!posts)return;
+    const countMap={};(comments||[]).forEach(c=>{countMap[c.post_id]=(countMap[c.post_id]||0)+1});
+    const plansOf={};(plans||[]).forEach(p=>{(plansOf[p.author_id]=plansOf[p.author_id]||[])[p.level]=p});
+    S.authors=authors.map(a=>{
+      const pl=(plansOf[a.id]||[]).filter(Boolean);
+      return{id:a.id,owner_id:a.owner_id,name:a.name,bio:a.bio,emoji:a.emoji,color:a.color,followers:a.followers,
+        plans:pl.map(p=>({name:p.name,price:p.price,perk:p.perk})),
+        memberCounts:pl.map(p=>p.member_count||0)};
+    });
+    S.posts=posts.map(p=>({id:p.id,authorId:p.author_id,title:p.title,desc:p.description||"",access:p.access,
+      planLevel:p.plan_level,hearts:p.hearts,memFree:p.mem_free_level,likes:p.likes,
+      at:new Date(p.created_at).getTime(),coverE:p.cover_e,coverImg:p.cover_img,cutCount:p.cut_count||1,
+      comments:new Array(countMap[p.id]||0).fill(null)}));
+    save();
+    const pg=[...document.querySelectorAll(".page")].find(x=>!x.hidden)?.id;
+    if(pg==="home")renderHome();
+    else if(pg==="authors")$("allAuthors").innerHTML=S.authors.length?S.authors.map(card).join(""):'<div class="empty">아직 등록한 크리에이터가 없어요.</div>';
+    else if(pg==="author"&&current)openAuthor(current.id);
+    else if(pg==="studio")renderStudio();
+  }catch(e){console.error(e)}
+}
+// 로그인한 사람의 팔로우·좋아요·북마크는 계정 기준으로 (여러 기기에서도 똑같이)
+async function loadMyInteractions(){
+  if(!S.user)return;
+  try{
+    const[{data:fo},{data:lk},{data:bm},{data:mm},{data:bt}]=await Promise.all([
+      sb.from("follows").select("author_id").eq("reader_id",S.user.id),
+      sb.from("liked").select("post_id").eq("reader_id",S.user.id),
+      sb.from("bookmarks").select("post_id").eq("reader_id",S.user.id),
+      sb.from("memberships").select("author_id,level").eq("reader_id",S.user.id),
+      sb.from("bought").select("post_id").eq("reader_id",S.user.id)
+    ]);
+    if(fo)S.follows=fo.map(r=>r.author_id);
+    if(lk)S.liked=lk.map(r=>r.post_id);
+    if(bm)S.bookmarks=bm.map(r=>r.post_id);
+    if(mm){S.memberships={};mm.forEach(r=>S.memberships[r.author_id]=r.level)}
+    if(bt)S.bought=bt.map(r=>r.post_id);
+    save();refresh();
+  }catch(e){console.error(e)}
+}
+loadShared();
+
+/* ===== 카드 HTML ===== */
+function card(a){
+  const f=S.follows.includes(a.id);
+  return `<button class="au" type="button" data-author="${a.id}">
+    <span class="av" style="background:${a.color}">${esc(a.emoji)}</span>
+    <h3>${esc(a.name)}</h3>
+    <span>${esc(a.bio)}</span>
+    <span>${f?'<span class="tag on">팔로잉</span> ':""}<span class="note">팔로워 ${num(a.followers)}</span></span>
+  </button>`;
+}
+function toonCard(p,showAuthor=true){
+  const a=author(p.authorId),ok=canSee(p),n=(p.imgs?.length||p.cuts?.length||p.cutCount||1);
+  const firstImg=p.imgs?.[0]||p.coverImg,firstE=p.cuts?.[0]?.e||p.coverE||a.emoji;
+  const face=firstImg?`<img src="${firstImg}" alt="">`:`<span>${esc(firstE)}</span>`;
+  const bm=S.bookmarks.includes(p.id);
+  return `<div class="toon" data-view="${p.id}" role="button" tabindex="0">
+    <div class="cover ${ok?"":"lock"}" style="background:${a.color}">${face}<span class="cuts">${n}컷</span>${ok?"":`<span class="lk">${lockLabel(p)}</span>`}
+      <button class="bm ${bm?"on":""}" type="button" data-bookmark="${p.id}" aria-pressed="${bm}" aria-label="북마크">${bm?"🔖":"📑"}</button></div>
+    <div class="meta">${showAuthor?`<span class="by"><span class="av sm" style="background:${a.color}">${esc(a.emoji)}</span>${esc(a.name)}</span>`:""}
+      <h3>${esc(p.title)}</h3><span class="note">${esc(p.desc)}</span>
+      <span class="stats">♡ ${num(p.likes)} · 댓글 ${p.comments.length}</span></div>
+  </div>`;
+}
+function toggleBookmark(id){
+  if(needLogin(()=>toggleBookmark(id)))return;
+  const i=S.bookmarks.indexOf(id);
+  if(i>=0){S.bookmarks.splice(i,1);toast("북마크를 해제했어요");
+    sb.from("bookmarks").delete().eq("reader_id",S.user.id).eq("post_id",id).then(r=>r.error&&console.error(r.error));}
+  else{S.bookmarks.push(id);toast("북마크에 담았어요");
+    sb.from("bookmarks").insert({reader_id:S.user.id,post_id:id}).then(r=>r.error&&console.error(r.error));}
+  save();if(viewing===id)view(id);refresh(true);
+}
+
+/* ===== 홈 ===== */
+function renderHome(){
+  $("hero").hidden=!!S.user&&S.follows.length>0;   // 팔로우가 생기면 소개 대신 피드부터
+  document.querySelectorAll("[data-feed]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.feed===feedMode));
+  let list=[...S.posts].sort((x,y)=>y.at-x.at);
+  if(feedMode==="following")list=list.filter(p=>S.follows.includes(p.authorId));
+  else list=list.filter(p=>p.access==="free"||canSee(p));     // 추천: 지금 볼 수 있는 만화 위주
+  $("homeFeed").innerHTML=list.length?list.map(p=>toonCard(p)).join("")
+    :`<div class="empty">${feedMode==="following"?"아직 팔로우한 크리에이터가 없어요.<br>마음에 드는 크리에이터를 팔로우하면 새 만화가 여기에 올라와요.":"아직 올라온 만화가 없어요.<br>크리에이터들이 만화를 올리면 여기에 보여요."}</div>`;
+}
+
+/* ===== 크리에이터 페이지 ===== */
+function openAuthor(id){
+  current=author(id);const a=current,f=S.follows.includes(a.id),lv=memLevel(a.id);
+  $("authorHead").innerHTML=`<span class="av big" style="background:${a.color}">${esc(a.emoji)}</span>
+    <div class="info"><h2 style="margin:0">${esc(a.name)}</h2><span class="note">팔로워 ${num(a.followers)}</span>
+    <p style="margin:8px 0 0">${esc(a.bio)}</p>
+    <div class="actions">${mine(a.id)?'<span class="tag on">내 크리에이터 페이지</span>':`
+      <button class="btn ${f?"on":""}" type="button" data-follow="${a.id}">${f?"팔로잉 ✓":"팔로우"}</button>
+      <button class="btn ghost" type="button" data-tip="${a.id}">🖋️ 후원</button>`}</div></div>`;
+  $("planSec").hidden=!a.plans.length;
+  $("authorPlans").innerHTML=a.plans.map((pl,i)=>`<div class="plan ${lv===i?"mine":""}">
+    <span class="note">${i+1}단계</span><b>${esc(pl.name)}</b><span>${esc(pl.perk)}</span>
+    <span style="font-weight:800">월 ${won(pl.price)}</span>
+    ${mine(a.id)?"":lv===i?'<span class="tag on">가입 중</span>':`<button class="btn sm" type="button" data-join="${a.id}" data-level="${i}">${lv>i?"이 단계로 변경":"가입하기"}</button>`}
+  </div>`).join("");
+  const list=S.posts.filter(p=>p.authorId===id).sort((x,y)=>y.at-x.at);
+  $("authorFeed").innerHTML=list.length?list.map(p=>toonCard(p,false)).join(""):'<div class="empty">아직 올린 만화가 없어요.</div>';
+  go("author");
+}
+function toggleFollow(id){
+  if(needLogin(()=>toggleFollow(id)))return;
+  const a=author(id),i=S.follows.indexOf(id);
+  if(i>=0){S.follows.splice(i,1);a.followers--;toast(a.name+" 팔로우를 취소했어요");
+    sb.from("follows").delete().eq("reader_id",S.user.id).eq("author_id",id).then(r=>r.error&&console.error(r.error));}
+  else{S.follows.push(id);a.followers++;toast(a.name+" 크리에이터를 팔로우했어요. 새 만화가 홈에 올라와요");
+    sb.from("follows").insert({reader_id:S.user.id,author_id:id}).then(r=>r.error&&console.error(r.error));}
+  sb.from("authors").update({followers:a.followers}).eq("id",id).then(r=>r.error&&console.error(r.error));
+  save();refresh();
+}
+
+/* ===== 멤버십 ===== */
+let pickLevel=0;
+function startJoin(id,level){
+  current=author(id);
+  if(needLogin(()=>startJoin(id,level)))return;
+  pickLevel=level??0;
+  $("memT").textContent=current.name+" 멤버십";
+  renderMemPick();show("memModal");
+}
+function renderMemPick(){
+  $("memPick").innerHTML=current.plans.map((pl,i)=>`<button type="button" data-pick="${i}" aria-pressed="${i===pickLevel}">
+    <span><b>${esc(pl.name)}</b><br><span class="note">${esc(pl.perk)}</span></span><span style="font-weight:800;white-space:nowrap">월 ${won(pl.price)}</span></button>`).join("");
+  $("memPay").textContent=`월 ${won(current.plans[pickLevel].price)} 가입하기`;
+}
+$("memPick").addEventListener("click",e=>{const b=e.target.closest("[data-pick]");if(!b)return;pickLevel=+b.dataset.pick;renderMemPick()});
+$("memPay").onclick=()=>{const a=current,old=memLevel(a.id);
+  if(old>=0)a.memberCounts[old]--;
+  S.memberships[a.id]=pickLevel;a.memberCounts[pickLevel]=(a.memberCounts[pickLevel]||0)+1;
+  if(!S.follows.includes(a.id)){S.follows.push(a.id);a.followers++;
+    sb.from("follows").insert({reader_id:S.user.id,author_id:a.id}).then(r=>r.error&&console.error(r.error));}
+  sb.from("memberships").upsert({reader_id:S.user.id,author_id:a.id,level:pickLevel}).then(r=>r.error&&console.error(r.error));
+  save();closeAll();toast(`${a.plans[pickLevel].name} 멤버십에 가입했어요 (데모)`);refresh()};
+
+/* ===== 잉크 ===== */
+let pickPack=HEART_PACKS[1], afterCharge=null;
+function openCharge(need,next){
+  if(needLogin(()=>openCharge(need,next)))return;
+  afterCharge=next||null;
+  $("hNeed").textContent=need?`잉크가 ${need - S.user.hearts}개 부족해요. 충전하면 바로 이어서 진행돼요.`:`지금 잉크 ${S.user.hearts}개`;
+  $("heartPick").innerHTML=HEART_PACKS.map(n=>`<button type="button" data-pack="${n}" aria-pressed="${n===pickPack}"><b>🖋️ ${n}</b><span>${won(n*HEART_WON)}</span></button>`).join("");
+  $("heartPay").textContent=`${won(pickPack*HEART_WON)} 충전하기`;
+  show("heartModal");
+}
+$("heartPick").addEventListener("click",e=>{const b=e.target.closest("[data-pack]");if(!b)return;pickPack=+b.dataset.pack;
+  $("heartPick").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("heartPay").textContent=`${won(pickPack*HEART_WON)} 충전하기`});
+function syncHearts(){
+  sb.from("profiles").update({hearts:S.user.hearts}).eq("id",S.user.id).then(r=>r.error&&console.error(r.error));
+}
+$("heartPay").onclick=()=>{S.user.hearts+=pickPack;S.heartLog.push({t:"잉크 충전",n:pickPack,at:Date.now()});syncHearts();save();closeAll();renderWho();toast(`잉크 ${pickPack}개를 충전했어요 (데모)`);
+  const n=afterCharge;afterCharge=null;if(n)n()};
+function spend(n,authorId,what){S.user.hearts-=n;S.heartsIn[authorId]=(S.heartsIn[authorId]||0)+n;S.heartLog.push({t:what,n:-n,at:Date.now()});syncHearts()}
+
+function buy(id){
+  const p=post(id);
+  if(needLogin(()=>buy(id)))return;
+  if(S.user.hearts<p.hearts){openCharge(p.hearts,()=>buy(id));return}
+  spend(p.hearts,p.authorId,"만화 구매: "+p.title);S.bought.push(p.id);
+  sb.from("bought").insert({reader_id:S.user.id,post_id:p.id}).then(r=>r.error&&console.error(r.error));
+  save();renderWho();toast(`잉크 ${p.hearts}개로 열었어요`);view(id);refresh(true);
+}
+
+/* ===== 후원 ===== */
+let tipN=TIP_PACKS[1];
+function startTip(id){
+  current=author(id);
+  if(needLogin(()=>startTip(id)))return;
+  $("tipT").textContent=current.name+" 크리에이터에게 잉크 후원";$("tipMsg").value="";
+  $("tipPick").innerHTML=TIP_PACKS.map(n=>`<button type="button" data-tn="${n}" aria-pressed="${n===tipN}" style="justify-content:center">🖋️ ${n}</button>`).join("");
+  $("tipPay").textContent=`잉크 ${tipN}개 보내기`;show("tipModal");
+}
+$("tipPick").addEventListener("click",e=>{const b=e.target.closest("[data-tn]");if(!b)return;tipN=+b.dataset.tn;
+  $("tipPick").querySelectorAll("button").forEach(x=>x.setAttribute("aria-pressed",x===b));$("tipPay").textContent=`잉크 ${tipN}개 보내기`});
+$("tipPay").onclick=()=>{
+  if(S.user.hearts<tipN){const id=current.id,msg=$("tipMsg").value;closeAll();openCharge(tipN,()=>{startTip(id);$("tipMsg").value=msg});return}
+  spend(tipN,current.id,current.name+" 크리에이터 후원");
+  S.tips.push({authorId:current.id,hearts:tipN,msg:$("tipMsg").value.trim(),nick:S.user.nick,at:Date.now()});
+  save();closeAll();renderWho();toast(current.name+" 크리에이터에게 잉크를 보냈어요")};
+
+/* ===== 만화 뷰어 ===== */
+let viewing=null;
+async function view(id){
+  const p=post(id),a=author(p.authorId);viewing=id;
+  $("vBy").innerHTML=`<span class="av sm" style="background:${a.color}">${esc(a.emoji)}</span><button class="btn ghost sm" type="button" data-author="${a.id}">${esc(a.name)}</button> ${p.access!=="free"?lockLabel(p):""}`;
+  $("vT").textContent=p.title;
+  if(!canSee(p)){
+    const plan=p.access==="plan"?a.plans[p.planLevel]:null;
+    $("vBody").innerHTML=`<p class="muted" style="margin:0 0 12px">${esc(p.desc)}</p><div class="gate">
+      <div style="font-size:48px">🔒</div>
+      ${p.access==="plan"
+        ?`<b>${esc(plan?.name||"멤버십")} 이상 회원만 볼 수 있어요</b><button class="btn" type="button" data-join="${a.id}" data-level="${p.planLevel}">멤버십 보기</button>`
+        :`<b>잉크 ${p.hearts}개로 열 수 있어요</b>${p.memFree!=null&&a.plans[p.memFree-1]?`<span class="note">${esc(a.plans[p.memFree-1].name)} 이상 멤버십 회원은 무료</span>`:""}
+          <button class="btn gold" type="button" data-buy="${p.id}">🖋️ ${p.hearts} 사용해서 보기</button>`}
+      </div>`;
+    show("viewModal");return;
+  }
+  if(p.cuts===undefined){ // Supabase에서 불러온 만화는 "볼 수 있을 때만" 실제 컷을 가져옴 (서버에서 막혀있음)
+    const{data:pc,error:pcErr}=await sb.from("post_content").select("cuts,imgs").eq("post_id",id).maybeSingle();
+    if(pcErr||!pc){toast("내용을 불러오지 못했어요: "+(pcErr?.message||"권한 없음"));p.cuts=[];p.imgs=[];}
+    else{
+      p.cuts=pc.cuts||[];
+      const raw=pc.imgs||[];
+      if(!raw.length)p.imgs=[];
+      else if(raw[0].startsWith("data:"))p.imgs=raw; // 예전 방식(base64)으로 올라간 만화는 그대로 보여줌
+      else{ // Storage에 올라간 이미지는 "볼 수 있는 사람만" 임시 열람 주소(signed URL)를 받아옴
+        const signed=await Promise.all(raw.map(path=>sb.storage.from("post-images").createSignedUrl(path,3600)));
+        p.imgs=signed.map(s=>s.data?.signedUrl).filter(Boolean);
+      }
+    }
+  }
+  const{data:cm}=await sb.from("comments").select("*").eq("post_id",id).order("created_at",{ascending:true});
+  p.comments=(cm||[]).map(c=>({nick:c.nick,t:c.body}));
+  const slides=p.imgs?.length?p.imgs.map(src=>`<div class="slide"><img src="${src}" alt=""></div>`)
+    :p.cuts.map(c=>`<div class="slide" style="background:${a.color}"><div><div class="em">${esc(c.e)}</div><div class="say">${esc(c.t)}</div></div></div>`);
+  const liked=S.liked.includes(p.id),bmV=S.bookmarks.includes(p.id);
+  $("vBody").innerHTML=`<div class="slides" id="slides">${slides.join("")}</div>
+    <div class="navs" style="margin-top:10px"><button class="btn ghost sm" type="button" data-slide="-1" aria-label="이전 컷">←</button>
+      <div class="dots" id="dots">${slides.map((_,i)=>`<i class="${i?"":"on"}"></i>`).join("")}</div>
+      <button class="btn ghost sm" type="button" data-slide="1" aria-label="다음 컷">→</button></div>
+    <div class="likebar" style="margin-top:12px"><button class="btn ${liked?"":"ghost"} sm" type="button" data-like="${p.id}">${liked?"♥":"♡"} ${num(p.likes)}</button>
+      <button class="btn ${bmV?"":"ghost"} sm" type="button" data-bookmark="${p.id}">${bmV?"🔖":"📑"} 북마크</button>
+      ${!S.follows.includes(a.id)&&!mine(a.id)?`<button class="btn ghost sm" type="button" data-follow="${a.id}">+ ${esc(a.name)} 팔로우</button>`:""}</div>
+    <h3 style="margin-top:16px;font-size:17px">댓글 ${p.comments.length}</h3>
+    <ul class="comments">${p.comments.map(c=>`<li><b>${esc(c.nick)}</b> ${esc(c.t)}</li>`).join("")||'<li class="note">첫 댓글을 남겨보세요.</li>'}</ul>
+    <form class="cform" id="cForm" style="margin-top:8px"><input id="cText" maxlength="100" placeholder="댓글 달기" aria-label="댓글"><button class="btn sm" type="submit">등록</button></form>`;
+  const sl=$("slides");
+  sl.addEventListener("scroll",()=>{const i=Math.round(sl.scrollLeft/sl.clientWidth);$("dots").querySelectorAll("i").forEach((d,k)=>d.classList.toggle("on",k===i))});
+  $("cForm").addEventListener("submit",async e=>{e.preventDefault();const t=$("cText").value.trim();if(!t)return;
+    if(needLogin(()=>view(id)))return;
+    const{error}=await sb.from("comments").insert({post_id:id,reader_id:S.user.id,nick:S.user.nick,body:t});
+    if(error){toast("댓글 등록 실패: "+error.message);return}
+    view(id);refresh(true)});
+  show("viewModal");
+}
+function like(id){
+  if(needLogin(()=>like(id)))return;
+  const p=post(id),i=S.liked.indexOf(id);
+  if(i>=0){S.liked.splice(i,1);p.likes--;
+    sb.from("liked").delete().eq("reader_id",S.user.id).eq("post_id",id).then(r=>r.error&&console.error(r.error));}
+  else{S.liked.push(id);p.likes++;
+    sb.from("liked").insert({reader_id:S.user.id,post_id:id}).then(r=>r.error&&console.error(r.error));}
+  sb.from("posts").update({likes:p.likes}).eq("id",id).then(r=>r.error&&console.error(r.error));
+  save();view(id);refresh(true);
+}
+
+/* ===== 크리에이터센터 (신청/승인은 Supabase applications·authors 테이블) ===== */
+async function myApplication(){
+  if(!S.user)return null;
+  const{data}=await sb.from("applications").select("*").eq("applicant_id",S.user.id)
+    .order("created_at",{ascending:false}).limit(1);
+  return (data&&data[0])||null;
+}
+// Supabase authors 행을 기존 화면이 쓰는 모양(m.plans, m.memberCounts 등)으로 로컬 S.authors에 반영
+async function syncMyAuthor(au){
+  const{data:plans}=await sb.from("plans").select("*").eq("author_id",au.id).order("level");
+  const m={id:au.id,owner_id:au.owner_id,name:au.name,bio:au.bio,emoji:au.emoji,color:au.color,followers:au.followers,
+    plans:(plans||[]).map(p=>({name:p.name,price:p.price,perk:p.perk})),
+    memberCounts:(plans||[]).map(p=>p.member_count||0)};
+  const i=S.authors.findIndex(a=>a.id===au.id);
+  if(i>=0)S.authors[i]=m;else S.authors.push(m);
+  S.meAuthorId=au.id;save();
+  return m;
+}
+async function renderStudio(){
+  if(!S.user){$("studioGate").hidden=false;$("studioPending").hidden=true;$("studioRejected").hidden=true;$("studioMain").hidden=true;return}
+  let m=S.meAuthorId?author(S.meAuthorId):null;                    // 이미 이 브라우저에 동기화돼 있으면(플랜·올린 만화 보존) 다시 안 받아옴
+  let app=null;
+  if(!m){
+    const{data:au}=await sb.from("authors").select("*").eq("owner_id",S.user.id).maybeSingle();
+    if(au)m=await syncMyAuthor(au);
+    else app=await myApplication();
+  }
+  const pend=!!(app&&app.status==="pending"), rej=!!(app&&app.status==="rejected");
+  $("studioGate").hidden=!!m||pend||rej;
+  $("studioPending").hidden=!!m||!pend;
+  $("studioRejected").hidden=!!m||!rej;
+  $("studioMain").hidden=!m;
+  if(pend)$("pendingInfo").textContent=`${app.emoji} ${app.name} — ${app.bio}`;
+  if(!m)return;
+  const members=m.memberCounts.reduce((s,n)=>s+(n||0),0);
+  const memWon=m.plans.reduce((s,pl,i)=>s+pl.price*(m.memberCounts[i]||0),0);
+  const hearts=S.heartsIn[m.id]||0;
+  $("meName").textContent=m.emoji+" "+m.name;
+  $("sFollow").textContent=num(m.followers);$("sMembers").textContent=members;$("sHearts").textContent="🖋️ "+hearts;
+  $("sIncome").textContent=won((memWon+hearts*HEART_WON)*AUTHOR_SHARE);
+  $("sCalc").textContent=`(멤버십 ${won(memWon)} + 잉크 ${hearts}개 × ${HEART_WON}원) × 크리에이터 몫 ${Math.round(AUTHOR_SHARE*100)}% · 비율은 임시값`;
+  // 플랜 입력칸 (최대 3단계)
+  $("planRows").innerHTML=[0,1,2].map(i=>{const pl=m.plans[i]||{};return `<div class="row3">
+    <label>${i+1}단계 이름<input data-pn="${i}" maxlength="12" value="${esc(pl.name||"")}" placeholder="${["말랑 팬","찐 팬","최애 팬"][i]}"></label>
+    <label>월 가격(원)<input data-pp="${i}" type="number" min="1000" step="100" value="${pl.price||""}" placeholder="${[2900,5900,9900][i]}"></label>
+    <label>혜택<input data-pk="${i}" maxlength="40" value="${esc(pl.perk||"")}" placeholder="비하인드 컷"></label></div>`}).join("");
+  // 올리기 폼의 멤버십 선택지
+  $("pPlan").innerHTML=m.plans.map((pl,i)=>`<option value="${i}">${i+1}단계 ${esc(pl.name)} 이상</option>`).join("");
+  $("pAccess").querySelector('[value="plan"]').disabled=!m.plans.length;
+  $("pMemFree").disabled=!m.plans.length;
+  syncAccess();
+  const posts=S.posts.filter(p=>p.authorId===m.id).sort((x,y)=>y.at-x.at);
+  $("myPosts").innerHTML=posts.length?posts.map(p=>`<li><span>${esc(p.title)} ${p.access==="free"?'<span class="tag">무료</span>':lockLabel(p)}</span><span class="note">♡ ${p.likes}</span></li>`).join("")
+    :'<li class="note">아직 올린 만화가 없어요.</li>';
+  const tips=S.tips.filter(t=>t.authorId===m.id);
+  $("tipList").innerHTML=tips.length?[...tips].reverse().map(t=>`<li><span><b>${esc(t.nick)}</b> ${esc(t.msg||"(메시지 없음)")}</span><span class="note">🖋️ ${t.hearts}</span></li>`).join("")
+    :'<li class="note">아직 받은 후원이 없어요.</li>';
+}
+function syncAccess(){const v=$("pAccess").value;$("pPlanWrap").hidden=v!=="plan";$("pPaidWrap").hidden=v!=="paid"}
+$("pAccess").addEventListener("change",syncAccess);
+$("regForm").addEventListener("submit",async e=>{e.preventDefault();
+  if(needLogin(()=>$("regForm").requestSubmit()))return;
+  const{error}=await sb.from("applications").insert({applicant_id:S.user.id,
+    name:$("regName").value.trim(),bio:$("regBio").value.trim()||"새로 온 크리에이터예요",
+    emoji:$("regEmoji").value.trim()||"✏️"});
+  if(error){toast("신청 실패: "+error.message);return}
+  $("regForm").reset();renderStudio();
+  toast("신청을 보냈어요. 운영자 승인을 기다려 주세요")});
+$("appCancel").onclick=async()=>{
+  const app=await myApplication();if(!app)return;
+  const{error}=await sb.from("applications").delete().eq("id",app.id);
+  if(error){toast("취소 실패: "+error.message);return}
+  renderStudio();toast("신청을 취소했어요")};
+$("appReapply").onclick=async()=>{
+  const app=await myApplication();if(!app)return;
+  await sb.from("applications").delete().eq("id",app.id); // 반려된 신청 지우고 새로 쓰게
+  renderStudio()};
+
+/* ===== 운영자 승인 화면 (Supabase 로그인 + profiles.is_admin으로 확인) ===== */
+async function renderAdmin(){
+  const ok=!!(S.user&&S.user.isAdmin);
+  $("adminGate").hidden=ok;$("adminMain").hidden=!ok;
+  $("adminLoginBtn").hidden=!!S.user;
+  $("adminGateMsg").textContent=!S.user?"운영자 계정으로 로그인해야 볼 수 있는 화면이에요.":
+    S.user.isAdmin?"":"이 계정은 운영자 권한이 없어요.";
+  if(!ok)return;
+  const{data:apps}=await sb.from("applications").select("*").order("created_at",{ascending:false});
+  const list=apps||[];
+  const ids=[...new Set(list.map(a=>a.applicant_id))];
+  const{data:profs}=ids.length?await sb.from("profiles").select("id,nick").in("id",ids):{data:[]};
+  const nickOf=id=>(profs||[]).find(p=>p.id===id)?.nick||"(알 수 없음)";
+  const pend=list.filter(a=>a.status==="pending"), done=list.filter(a=>a.status!=="pending");
+  $("adminPending").innerHTML=pend.length?pend.map(a=>`<li>
+    <span style="flex:1;min-width:0">${a.emoji} <b>${esc(a.name)}</b> — ${esc(a.bio)}<br><span class="note">신청자: ${esc(nickOf(a.applicant_id))}</span></span>
+    <span style="display:flex;gap:6px;flex-shrink:0">
+      <button class="btn sm" type="button" style="white-space:nowrap" data-approve="${a.id}">승인</button>
+      <button class="btn ghost sm" type="button" style="white-space:nowrap" data-reject="${a.id}">반려</button>
+    </span></li>`).join(""):'<li class="note">대기 중인 신청이 없어요.</li>';
+  $("adminDone").innerHTML=done.length?done.map(a=>`<li><span>${a.emoji} ${esc(a.name)} — ${esc(nickOf(a.applicant_id))}</span>
+    <span class="tag">${a.status==="approved"?"승인됨":"반려됨"}</span></li>`).join(""):'<li class="note">아직 없어요.</li>';
+}
+async function approveApp(id){
+  const{data:a}=await sb.from("applications").select("*").eq("id",id).maybeSingle();
+  if(!a||a.status!=="pending")return;
+  const colors=["#FFE1CC","#DDEBFF","#FFF1B8","#E0F4D8","#F4DDF7"];
+  const{data:au,error:e1}=await sb.from("authors").insert({owner_id:a.applicant_id,name:a.name,
+    bio:a.bio,emoji:a.emoji,color:colors[Math.floor(Math.random()*colors.length)]}).select().single();
+  if(e1){toast("승인 실패: "+e1.message);return}
+  const{error:e2}=await sb.from("applications").update({status:"approved",author_id:au.id}).eq("id",id);
+  if(e2){toast("승인 실패: "+e2.message);return}
+  loadShared();renderAdmin();toast("승인했어요")}
+async function rejectApp(id){
+  const{error}=await sb.from("applications").update({status:"rejected"}).eq("id",id);
+  if(error){toast("반려 실패: "+error.message);return}
+  renderAdmin();toast("반려했어요")}
+$("adminLoginBtn").onclick=()=>{setAuthMode("login");show("authModal")};
+function checkAdminHash(){if(location.hash==="#admin")go("admin")}
+window.addEventListener("hashchange",checkAdminHash);
+$("adminExit").onclick=()=>{history.replaceState(null,"",location.pathname+location.search);go("home")};
+$("myPage").onclick=()=>openAuthor(S.meAuthorId);
+$("planForm").addEventListener("submit",e=>{e.preventDefault();const m=author(S.meAuthorId);
+  const plans=[];
+  for(const i of [0,1,2]){const name=document.querySelector(`[data-pn="${i}"]`).value.trim(),price=+document.querySelector(`[data-pp="${i}"]`).value,perk=document.querySelector(`[data-pk="${i}"]`).value.trim();
+    if(!name&&!price)continue;
+    if(!name||price<1000){toast(`${i+1}단계는 이름과 1,000원 이상 가격이 필요해요`);return}
+    plans.push({name,price,perk:perk||"멤버십 전용 만화"})}
+  for(let i=1;i<plans.length;i++)if(plans[i].price<=plans[i-1].price){toast("높은 단계일수록 가격이 높아야 해요");return}
+  m.plans=plans;m.memberCounts=plans.map((_,i)=>m.memberCounts[i]||0);
+  save();renderStudio();toast(plans.length?`멤버십 ${plans.length}단계를 저장했어요`:"멤버십을 껐어요")});
+
+// 이미지를 가로 900px로 줄여서 저장 (브라우저 저장 공간 한계 때문)
+// 이미지를 가로 900px로 줄이고, 썸네일용 base64(dataUrl)와 Storage 업로드용 blob을 함께 만듦
+function shrink(file){return new Promise((res,rej)=>{const r=new FileReader();
+  r.onload=()=>{const img=new Image();img.onload=()=>{const s=Math.min(1,900/img.width),c=document.createElement("canvas");
+    c.width=img.width*s;c.height=img.height*s;c.getContext("2d").drawImage(img,0,0,c.width,c.height);
+    c.toBlob(blob=>res({dataUrl:c.toDataURL("image/jpeg",.72),blob}),"image/jpeg",.72)};
+    img.onerror=rej;img.src=r.result};r.onerror=rej;r.readAsDataURL(file)})}
+$("postForm").addEventListener("submit",async e=>{e.preventDefault();
+  const m=author(S.meAuthorId);if(!m)return;
+  const files=[...$("pImgs").files].slice(0,10);let shrunk=[];
+  try{shrunk=await Promise.all(files.map(shrink))}catch(err){toast("이미지를 읽지 못했어요. 다른 파일로 해주세요");return}
+  const access=$("pAccess").value,title=$("pTitle").value.trim();
+  const row={author_id:m.id,title,description:$("pDesc").value.trim()||"새 만화",access,
+    cover_img:shrunk[0]?.dataUrl||null,cover_e:shrunk.length?null:m.emoji,cut_count:shrunk.length||1};
+  if(access==="plan")row.plan_level=+$("pPlan").value;
+  if(access==="paid"){row.hearts=Math.max(1,+$("pHearts").value||1);if($("pMemFree").checked&&m.plans.length)row.mem_free_level=1}
+  const{data:newPost,error}=await sb.from("posts").insert(row).select().single();
+  if(error){toast("업로드 실패: "+error.message);return}
+  // 실제 컷 이미지는 base64로 DB에 안 넣고, Supabase Storage에 파일로 올림 (볼 수 있는 사람만 꺼내볼 수 있게 RLS로 막혀있음)
+  let imgPaths=[];
+  if(shrunk.length){
+    const ups=await Promise.all(shrunk.map((s,i)=>sb.storage.from("post-images").upload(`${newPost.id}/${i}.jpg`,s.blob,{contentType:"image/jpeg",upsert:true})));
+    imgPaths=ups.map((u,i)=>u.error?null:`${newPost.id}/${i}.jpg`).filter(Boolean);
+    if(imgPaths.length<shrunk.length)toast("일부 이미지 업로드에 실패했어요");
+  }
+  const cuts=imgPaths.length?[]:[{e:m.emoji,t:title}];
+  const{error:cErr}=await sb.from("post_content").insert({post_id:newPost.id,cuts,imgs:imgPaths});
+  if(cErr){toast("컷 저장 실패: "+cErr.message);return}
+  e.target.reset();syncAccess();
+  await loadShared();renderStudio();
+  toast(`${m.name} 페이지에 올렸어요${imgPaths.length?` (${imgPaths.length}컷)`:""}`)});
+
+/* ===== 내 정보 ===== */
+const fmtDate=t=>{const d=new Date(t);return `${d.getMonth()+1}.${d.getDate()}`};
+let mySec="menu";
+function mySection(name){
+  mySec=name;
+  $("myMenu").hidden=name!=="menu";
+  $("mySecWrap").hidden=name==="menu";
+  if(name!=="menu")document.querySelectorAll('#mySecWrap > .card').forEach(c=>c.hidden=c.id!=="sec-"+name);
+  window.scrollTo(0,0);
+}
+function renderSettings(){
+  $("setGate").hidden=!!S.user;$("setMain").hidden=!S.user;
+  $("leaveBox").hidden=true;
+  if(!S.user)return;
+  $("setNick").value=S.user.nick;$("setEmail").value=S.user.email;
+  $("prNew").checked=S.prefs.newToon;$("prReply").checked=S.prefs.reply;$("prNews").checked=S.prefs.news;
+  $("setFollows").innerHTML=S.follows.length?S.follows.map(id=>{const a=author(id);if(!a)return"";
+    return `<li><button class="btn ghost sm" type="button" data-author="${a.id}">${esc(a.emoji)} ${esc(a.name)}</button><button class="btn ghost sm" type="button" data-unfollow="${a.id}">팔로우 취소</button></li>`}).join("")
+    :'<li class="note">아직 팔로우한 크리에이터가 없어요.</li>';
+  const mems=Object.entries(S.memberships).filter(([id])=>author(id));
+  $("setMems").innerHTML=mems.length?mems.map(([id,lv])=>{const a=author(id),pl=a.plans[lv];
+    return `<li><span><b>${esc(a.name)}</b> · ${esc(pl?.name||"멤버십")}<br><span class="note">월 ${won(pl?.price||0)}</span></span><button class="btn ghost sm" type="button" data-cancel="${id}">해지</button></li>`}).join("")
+    :'<li class="note">가입한 멤버십이 없어요.</li>';
+  $("setHearts").textContent="🖋️ "+S.user.hearts;
+  $("setHeartLog").innerHTML=S.heartLog.length?[...S.heartLog].reverse().slice(0,20).map(h=>`<li><span>${esc(h.t)} <span class="note">${fmtDate(h.at)}</span></span><span class="${h.n>0?"heart":"note"}">${h.n>0?"+":""}${h.n}</span></li>`).join("")
+    :'<li class="note">잉크 사용 내역이 없어요.</li>';
+  const bought=S.bought.map(post).filter(Boolean);
+  $("setBought").innerHTML=bought.length?bought.map(p=>`<li><span>${esc(p.title)} <span class="note">${esc(author(p.authorId)?.name||"")}</span></span><button class="btn mint sm" type="button" data-view="${p.id}">보기</button></li>`).join("")
+    :'<li class="note">구매한 만화가 없어요.</li>';
+  const bms=S.bookmarks.map(post).filter(Boolean);
+  $("setBookmarks").innerHTML=bms.length?bms.map(p=>`<li><span>${esc(p.title)} <span class="note">${esc(author(p.authorId)?.name||"")}</span></span><button class="btn ghost sm" type="button" data-view="${p.id}">보기</button></li>`).join("")
+    :'<li class="note">북마크한 만화가 없어요.</li>';
+  const m=author(S.meAuthorId);$("myAuthorRow").hidden=!m;
+  if(m){$("aeName").value=m.name;$("aeEmoji").value=m.emoji;$("aeBio").value=m.bio}
+  $("myHeartVal").textContent="🖋️ "+S.user.hearts;
+  $("myMemVal").textContent=(mems.length?mems.length+"개 ":"")+"›";
+  $("myBmVal").textContent=(bms.length?bms.length+"개 ":"")+"›";
+  mySection(mySec);
+}
+$("profileForm").addEventListener("submit",e=>{e.preventDefault();S.user.nick=$("setNick").value.trim()||S.user.nick;save();renderWho();toast("닉네임을 저장했어요")});
+[["prNew","newToon"],["prReply","reply"],["prNews","news"]].forEach(([id,k])=>$(id).addEventListener("change",()=>{S.prefs[k]=$(id).checked;save();toast("알림 설정을 저장했어요")}));
+$("authorEditForm").addEventListener("submit",e=>{e.preventDefault();const m=author(S.meAuthorId);if(!m)return;
+  m.name=$("aeName").value.trim()||m.name;m.emoji=$("aeEmoji").value.trim()||m.emoji;m.bio=$("aeBio").value.trim()||m.bio;save();toast("크리에이터 정보를 저장했어요")});
+$("setCharge").onclick=()=>openCharge(0,()=>renderSettings());
+$("leaveAsk").onclick=()=>{$("leaveBox").hidden=false;$("leaveNo").focus()};
+$("leaveNo").onclick=()=>{$("leaveBox").hidden=true};
+$("leaveYes").onclick=()=>{
+  for(const [id,lv] of Object.entries(S.memberships)){const a=author(id);if(a&&a.memberCounts[lv])a.memberCounts[lv]--}
+  S.follows.forEach(id=>{const a=author(id);if(a)a.followers--});
+  if(S.meAuthorId){S.posts=S.posts.filter(p=>p.authorId!==S.meAuthorId);S.authors=S.authors.filter(a=>a.id!==S.meAuthorId)}
+  sb.auth.signOut();
+  Object.assign(S,{user:null,authedUid:null,meAuthorId:null,follows:[],memberships:{},bought:[],liked:[],bookmarks:[],tips:S.tips.filter(t=>author(t.authorId)),heartLog:[]});
+  save();renderWho();go("home");toast("탈퇴했어요. 그동안 고마웠어요")};
+function cancelMem(id){const a=author(id),lv=memLevel(id);if(lv<0)return;
+  if(a.memberCounts[lv])a.memberCounts[lv]--;delete S.memberships[id];
+  sb.from("memberships").delete().eq("reader_id",S.user.id).eq("author_id",id).then(r=>r.error&&console.error(r.error));
+  save();renderSettings();toast(a.name+" 멤버십을 해지했어요 (데모)")}
+
+/* ===== 현재 화면 다시 그리기 ===== */
+function refresh(keepModal){
+  const pg=[...document.querySelectorAll(".page")].find(p=>!p.hidden)?.id;
+  if(pg==="author"&&current)openAuthorQuiet(current.id);
+  else if(pg)go(pg,true);
+  if(!keepModal)window.scrollTo(0,window.scrollY);
+}
+function openAuthorQuiet(id){const y=window.scrollY;openAuthor(id);window.scrollTo(0,y)}
+
+/* ===== 클릭 처리 (한 곳에서) ===== */
+document.addEventListener("click",e=>{
+  const t=e.target,c=s=>t.closest(s);
+  let b;
+  if(b=c("[data-go]")){closeAll();go(b.dataset.go);return}
+  if(b=c("[data-mysec]")){mySection(b.dataset.mysec);return}
+  if(b=c("[data-bookmark]")){toggleBookmark(b.dataset.bookmark);return}
+  if(b=c("[data-author]")){closeAll();openAuthor(b.dataset.author);return}
+  if(b=c("[data-view]")){view(b.dataset.view);return}
+  if(b=c("[data-follow]")){toggleFollow(b.dataset.follow);if(!$("viewModal").hidden&&viewing)view(viewing);return}
+  if(b=c("[data-join]")){closeAll();startJoin(b.dataset.join,+b.dataset.level);return}
+  if(b=c("[data-buy]")){buy(b.dataset.buy);return}
+  if(b=c("[data-tip]")){startTip(b.dataset.tip);return}
+  if(b=c("[data-like]")){like(b.dataset.like);return}
+  if(b=c("[data-slide]")){const sl=$("slides");sl.scrollBy({left:sl.clientWidth*+b.dataset.slide,behavior:"smooth"});return}
+  if(b=c("[data-feed]")){feedMode=b.dataset.feed;renderHome();return}
+  if(c("[data-close]")||t.classList.contains("modal")){closeAll();return}
+  if(b=c("[data-unfollow]")){toggleFollow(b.dataset.unfollow);renderSettings();return}
+  if(b=c("[data-cancel]")){cancelMem(b.dataset.cancel);return}
+  if(b=c("[data-approve]")){approveApp(b.dataset.approve);return}
+  if(b=c("[data-reject]")){rejectApp(b.dataset.reject);return}
+  if(t.id==="login"||t.id==="login2"){setAuthMode("login");show("authModal");return}
+  if(c("#heartBtn")){openCharge(0);return}
+  if(t.id==="logout"){sb.auth.signOut();S.user=null;save();renderWho();go("home");toast("로그아웃했어요")}
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape")closeAll();
+  if(!$("viewModal").hidden&&$("slides")&&(e.key==="ArrowRight"||e.key==="ArrowLeft")){const sl=$("slides");sl.scrollBy({left:sl.clientWidth*(e.key==="ArrowRight"?1:-1),behavior:"smooth"})}
+  if((e.key==="Enter"||e.key===" ")&&e.target.matches('.toon[data-view]')){e.preventDefault();view(e.target.dataset.view)}
+});
+$("reset").onclick=()=>{S=JSON.parse(JSON.stringify(SEED));save();renderWho();feedMode="all";go("home");toast("처음 상태로 되돌렸어요")};
+
+/* ===== 둘러보기용 샘플 (실제 서비스엔 안 보여요. 혼자 테스트할 때 쓰는 임시 데이터) ===== */
+const SAMPLE = {
+  authors: [
+    {id:"samp1",name:"하루툰",bio:"자취생의 하루를 그려요",emoji:"🐰",color:"#FFE1CC",followers:1280,
+      plans:[{name:"말랑 팬",price:2900,perk:"비하인드 컷"},{name:"찐 팬",price:5900,perk:"비하인드 컷 + 캐릭터 원본 파일"}],
+      memberCounts:[34,11]},
+    {id:"samp2",name:"달빛 고양이",bio:"밤마다 그리는 잔잔한 일상툰",emoji:"🐱",color:"#DDEBFF",followers:640,
+      plans:[{name:"냥집사",price:3900,perk:"주말 스페셜 컷"}],
+      memberCounts:[18]}
+  ],
+  posts: [
+    {id:"sp1",authorId:"samp1",title:"1화: 자취 시작",desc:"독립 첫날의 좌충우돌",access:"free",likes:342,
+      comments:[{nick:"독자1",t:"완전 제 얘기ㅠㅠ 공감돼요"},{nick:"독자2",t:"다음화 언제 나와요?"}],
+      at:Date.now()-86400000*2,cuts:[{e:"🐰",t:"드디어 내 집이다!"}]},
+    {id:"sp2",authorId:"samp1",title:"7화: 첫 택배 참사 (비하인드)",desc:"멤버십 전용 비하인드 컷이에요",access:"plan",planLevel:0,
+      likes:98,comments:[],at:Date.now()-86400000,cuts:[{e:"📦",t:"이게 왜 여기서 터지지"}]},
+    {id:"sp3",authorId:"samp1",title:"스페셜: 캐릭터 설정집",desc:"잉크로 살 수 있는 단건 콘텐츠예요",access:"paid",hearts:8,memFree:1,
+      likes:210,comments:[],at:Date.now()-86400000*5,cuts:[{e:"✏️",t:"캐릭터 설정 대방출"}]},
+    {id:"sp4",authorId:"samp2",title:"3화: 비 오는 날",desc:"비 오는 날엔 역시 이불 속",access:"free",likes:156,
+      comments:[{nick:"독자3",t:"그림체 너무 좋아요"}],at:Date.now()-86400000*3,cuts:[{e:"🐱",t:"토독토독..."}]},
+    {id:"sp5",authorId:"samp2",title:"5화: 주말 스페셜",desc:"멤버십 전용 주말 에피소드",access:"plan",planLevel:0,
+      likes:64,comments:[],at:Date.now()-86400000*4,cuts:[{e:"🌙",t:"오늘은 늦잠 자는 날"}]}
+  ]
+};
+$("fillSample").onclick=()=>{
+  S.authors=JSON.parse(JSON.stringify(SAMPLE.authors));
+  S.posts=JSON.parse(JSON.stringify(SAMPLE.posts));
+  save();feedMode="all";refresh(true);
+  toast("샘플로 채웠어요. 다 보셨으면 '데모 초기화'로 지우면 돼요");
+};
+
+renderWho();go("home");checkAdminHash();
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+name: iOS 앱 빌드 (시뮬레이터, 서명 없음)
+
+# Mac이 없어도 GitHub의 macOS 러너로 iOS 프로젝트가 잘 컴파일되는지 확인하는 용도예요.
+# 아직 Apple 개발자 계정(인증서/프로비저닝 프로파일)이 없어서 "서명"은 못 하고,
+# 시뮬레이터용으로만 빌드해요 — 실기기 설치나 App Store 제출은 Apple 개발자 계정과
+# 서명 인증서가 준비된 뒤 이 워크플로를 확장해서 진행해요.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - 'www/**'
+      - 'index.html'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/ios-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: 패키지 설치
+        run: npm ci
+
+      - name: index.html을 www/로 복사 (Capacitor 웹 자산)
+        run: cp index.html www/index.html
+
+      - name: Capacitor 동기화
+        run: npx cap sync ios
+
+      - name: CocoaPods 설치
+        working-directory: ios/App
+        run: pod install
+
+      - name: 시뮬레이터용 빌드 (서명 없이 컴파일만 확인)
+        working-directory: ios/App
+        run: |
+          xcodebuild -workspace App.xcworkspace -scheme App \
+            -sdk iphonesimulator -configuration Debug \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO build

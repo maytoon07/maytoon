@@ -1,0 +1,53 @@
+name: Android 앱 빌드
+
+# main 브랜치에 푸시될 때마다(또는 수동 실행 시) 안드로이드 디버그 APK를 만들어요.
+# 아직 서명(release) 빌드는 아니라서 스토어 제출용은 아니고, 폰에 직접 설치(사이드로드)해서
+# 테스트하는 용도예요. Google Play 제출용 서명 빌드는 Play Console 키스토어가 준비되면 추가해요.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'www/**'
+      - 'index.html'
+      - 'capacitor.config.ts'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/android-build.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: 패키지 설치
+        run: npm ci
+
+      - name: index.html을 www/로 복사 (Capacitor 웹 자산)
+        run: cp index.html www/index.html
+
+      - name: Capacitor 동기화
+        run: npx cap sync android
+
+      - name: 디버그 APK 빌드
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: APK 업로드 (Actions 결과물로 다운로드 가능)
+        uses: actions/upload-artifact@v4
+        with:
+          name: maytoon-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30
