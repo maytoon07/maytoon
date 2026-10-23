@@ -36,10 +36,14 @@ jobs:
 
       - name: Capacitor 동기화
         run: |
-          npx cap sync ios 2>&1 | tee /tmp/cap-sync.log
-          code=${PIPESTATUS[0]}
+          set +e
+          npx cap sync ios > /tmp/cap-sync.log 2>&1
+          code=$?
+          set -e
+          cat /tmp/cap-sync.log
           if [ "$code" != "0" ]; then
-            echo "::error::Capacitor sync failed (exit $code):%0A$(sed 's/$/%0A/' /tmp/cap-sync.log | tr -d '\n')"
+            echo "::error::Capacitor sync failed (exit $code), see lines below"
+            while IFS= read -r line; do echo "::error::$line"; done < /tmp/cap-sync.log
             exit $code
           fi
         shell: bash
