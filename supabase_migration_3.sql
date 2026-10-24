@@ -11,7 +11,8 @@ insert into storage.buckets (id, name, public)
 values ('post-images', 'post-images', false)
 on conflict (id) do nothing;
 
-alter table storage.objects enable row level security;
+-- (storage.objects는 Supabase가 기본으로 이미 RLS를 켜놔서 별도로 켤 필요 없음 —
+--  오히려 직접 켜려고 하면 "must be owner of table objects" 권한 에러가 남)
 
 -- 2) "볼 수 있는 사람만 이 이미지를 꺼내볼 수 있다" — post_content와 똑같은 규칙(can_see_post) 적용
 --    이미지는 "<만화id>/0.jpg", "<만화id>/1.jpg" ... 형태의 경로로 저장할 거라
