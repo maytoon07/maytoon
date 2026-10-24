@@ -4,17 +4,11 @@ name: iOS 앱 빌드 (시뮬레이터, 서명 없음)
 # 아직 Apple 개발자 계정(인증서/프로비저닝 프로파일)이 없어서 "서명"은 못 하고,
 # 시뮬레이터용으로만 빌드해요 — 실기기 설치나 App Store 제출은 Apple 개발자 계정과
 # 서명 인증서가 준비된 뒤 이 워크플로를 확장해서 진행해요.
+#
+# ※ 2026-10-24: GitHub macOS 러너(arm64·Intel 둘 다)가 계속 큐에서만 대기하고
+#   끝나지 않는 문제 때문에 자동 실행(push 트리거)은 꺼둠. 필요할 때 Actions 탭에서
+#   "Run workflow" 버튼으로 수동 실행하거나, Apple 개발자 계정 준비되면 다시 켤 것.
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'ios/**'
-      - 'www/**'
-      - 'index.html'
-      - 'capacitor.config.ts'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.github/workflows/ios-build.yml'
   workflow_dispatch:
 
 jobs:
